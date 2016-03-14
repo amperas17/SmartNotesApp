@@ -53,6 +53,7 @@
                 android:text="Priority: "/>
 
             <TextView
+                android:id="@+id/tv_note_show_rank"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="20sp"
