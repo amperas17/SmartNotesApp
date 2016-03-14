@@ -13,8 +13,11 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.Toast;
+
+import com.squareup.picasso.Picasso;
 
 /**
  *
@@ -24,6 +27,9 @@ public class NoteItemEditFragment extends Fragment {
 
     EditText mEtTitle,mEtContent;
     Spinner mSpinner;
+    ImageButton mIbImage;
+
+    Boolean mIsEditing;
 
     int mRank;
     @Override
@@ -56,13 +62,30 @@ public class NoteItemEditFragment extends Fragment {
             }
         });
 
+        mIbImage = (ImageButton)view.findViewById(R.id.ib_note_edit_image);
 
-        Bundle bundle = getArguments();
-        if (bundle!=null){
-            Log.d(LOG_TAG, "" + getArguments().toString());
+        Bundle arguments = getArguments();
+        if (arguments!=null){
+            mIsEditing = true;
+            Log.d(LOG_TAG, "EditFrag:onCreateView " + arguments.getParcelable(Note.NOTE));
+            Note note = arguments.getParcelable(Note.NOTE);
+            mEtTitle.setText(note.mTitle);
+            mEtContent.setText(note.mContent);
+            mSpinner.setSelection(note.mRank);
+
+            if (note.mImagePath!=null){
+                Picasso.with(getActivity())
+                        .load(note.mImagePath)
+                        .placeholder(R.drawable.ic_simple_note)
+                        .error(R.drawable.ic_simple_note)
+                        .centerInside()
+                        .into(mIbImage);
+            } else {
+                mIbImage.setImageResource(R.drawable.ic_simple_note);
+            }
 
         } else {
-            Log.d(LOG_TAG, "null");
+            mIsEditing = false;
         }
 
 

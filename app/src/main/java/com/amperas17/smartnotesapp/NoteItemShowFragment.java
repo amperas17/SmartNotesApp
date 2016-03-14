@@ -33,6 +33,9 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
     TextView mTvTitle,mTvContent,mTvRank;
     ImageView mIvImage;
 
+    String mImagePath;
+    int mRank;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -44,7 +47,6 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
         mTvRank = (TextView)view.findViewById(R.id.tv_note_show_rank);
 
         mIvImage = (ImageView)view.findViewById(R.id.iv_note_show_image);
-
 
         Bundle arguments = getArguments();
         if (arguments!=null) {
@@ -64,6 +66,11 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
         switch (item.getItemId()) {
             case R.id.btEditMenuItem:
                 Fragment fragment = new NoteItemEditFragment();
+                Bundle bundle = new Bundle();
+                Note note = new Note(0,mTvTitle.getText().toString(),
+                        mTvContent.getText().toString(),mRank,0,mImagePath,0,0);
+                bundle.putParcelable(Note.NOTE,note);
+                fragment.setArguments(bundle);
                 getActivity().getSupportFragmentManager().beginTransaction()
                         .addToBackStack("editNote")
                         .setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left,
@@ -99,11 +106,13 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
 
         int rank_number = cursor.getInt(cursor
                 .getColumnIndex(NoteDBContract.NoteTable.COLUMN_RANK));
+        mRank = rank_number;
         mTvRank.setText(NoteDBContract.NoteTable.PRIORITIES[rank_number]);
 
         String imagePath = cursor.getString(cursor
                 .getColumnIndex(NoteDBContract.NoteTable.COLUMN_IMAGE_PATH));
         if (imagePath != null){
+            mImagePath = imagePath;
             Picasso.with(getActivity())
                     .load(imagePath)
                     .placeholder(R.drawable.ic_simple_note)
