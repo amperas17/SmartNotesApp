@@ -16,7 +16,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -51,7 +50,7 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.btAddMenuItem:
-                openNoteFragment(noteFragType.EDIT);
+                openNoteFragment(noteFragType.EDIT,null);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -61,20 +60,21 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        //Log.d(AppContract.LOG_TAG, "NoteFrag[onActivityCreated]");
         getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
     }
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-        TextView textView = (TextView)v.findViewById(R.id.tv_list_item_title);
-        Toast.makeText(getActivity(),textView.getText().toString(),Toast.LENGTH_LONG).show();
+        TextView tvID = (TextView)v.findViewById(R.id.tv_list_item_note_id);
+
+        Bundle bundle = new Bundle();
+        bundle.putInt(NoteDBContract.NoteTable._ID,Integer.parseInt(tvID.getText().toString()));
         //getListView().setBackgroundColor(R.color.transparent);
 
-        openNoteFragment(noteFragType.SHOW);
+        openNoteFragment(noteFragType.SHOW,bundle);
     }
 
-    public void openNoteFragment(noteFragType fragmentType){
+    public void openNoteFragment(noteFragType fragmentType,Bundle bundle){
         final String SHOW_NOTE = "showNote";
         final String EDIT_NOTE = "editNote";
 
@@ -93,6 +93,7 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
         }
 
         if (fragment != null) {
+            fragment.setArguments(bundle);
             getActivity().getSupportFragmentManager().beginTransaction()
                     .addToBackStack(stackTag)
                     .setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left,
@@ -105,7 +106,8 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
 
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
-        CursorLoader cursorLoader = new CursorLoader(getActivity(), NoteDBContract.NOTE_TABLE_URI, null,
+        CursorLoader cursorLoader = new CursorLoader(getActivity(),
+                NoteDBContract.NoteTable.TABLE_URI, null,
                 null, null, null);
         return cursorLoader;
     }

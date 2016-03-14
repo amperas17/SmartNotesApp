@@ -2,6 +2,7 @@ package com.amperas17.smartnotesapp;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +30,9 @@ public class NoteAdapter extends CursorAdapter{
 
         ViewHolder holder = new ViewHolder();
 
+        TextView tvId = (TextView)rootView.findViewById(R.id.tv_list_item_note_id);
+        holder.tvId = tvId;
+
         ImageView ivImage = (ImageView)rootView.findViewById(R.id.iv_list_item_image);
         holder.ivImage = ivImage;
 
@@ -48,9 +52,12 @@ public class NoteAdapter extends CursorAdapter{
         ViewHolder holder = (ViewHolder)view.getTag();
         if (holder != null){
 
+            holder.tvId.setText(cursor.getString(cursor
+                    .getColumnIndex(NoteDBContract.NoteTable._ID)).toString());
+
             String imagePath = cursor.getString(cursor
                     .getColumnIndex(NoteDBContract.NoteTable.COLUMN_IMAGE_PATH));
-            if (!imagePath.equals("")){
+            if (imagePath != null){
                 File file = new File(imagePath);
 
                 mPicasso.with(context)
@@ -60,6 +67,8 @@ public class NoteAdapter extends CursorAdapter{
                         .error(R.drawable.ic_simple_note)
                         .centerInside()
                         .into(holder.ivImage);
+            } else {
+                holder.ivImage.setImageResource(R.drawable.ic_simple_note);
             }
 
             holder.tvTitle.setText(cursor.getString(cursor
@@ -68,16 +77,16 @@ public class NoteAdapter extends CursorAdapter{
             int rank = cursor.getInt(cursor
                     .getColumnIndex(NoteDBContract.NoteTable.COLUMN_RANK));
             switch (rank){
-                case NoteDBContract.NoteTable.NO_PRIORUTY:
+                case NoteDBContract.NoteTable.NO_PRIORITY:
                     holder.ivPriority.setImageResource(R.drawable.ic_white_pin);
                     break;
-                case NoteDBContract.NoteTable.LOW_PRIORUTY:
+                case NoteDBContract.NoteTable.LOW_PRIORITY:
                     holder.ivPriority.setImageResource(R.drawable.ic_green_pin);
                     break;
-                case NoteDBContract.NoteTable.MEDIUM_PRIORUTY:
+                case NoteDBContract.NoteTable.MEDIUM_PRIORITY:
                     holder.ivPriority.setImageResource(R.drawable.ic_yellow_pin);
                     break;
-                case NoteDBContract.NoteTable.HIGH_PRIORUTY:
+                case NoteDBContract.NoteTable.HIGH_PRIORITY:
                     holder.ivPriority.setImageResource(R.drawable.ic_red_pin);
                     break;
                 default:
@@ -88,6 +97,7 @@ public class NoteAdapter extends CursorAdapter{
     }
 
     public static class ViewHolder {
+        public TextView tvId;
         public ImageView ivImage;
         public TextView tvTitle;
         public ImageView ivPriority;
