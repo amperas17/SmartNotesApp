@@ -1,0 +1,80 @@
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <EditText
+            android:id="@+id/et_note_edit_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="26sp"
+            android:hint="Note title"
+            android:layout_marginTop="5dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="2dp"
+
+            />
+
+        <EditText
+            android:id="@+id/et_note_edit_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="22sp"
+            android:layout_below="@id/et_note_edit_title"
+            android:hint="Note text"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            />
+
+        <LinearLayout
+            android:id="@+id/ll_note_edit_rank"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_below="@+id/et_note_edit_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="10dp"
+            android:gravity="center_horizontal"
+            >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:text="Priority: "/>
+
+            <Spinner
+                android:id="@+id/spinner_note_edit_rank"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                >
+
+            </Spinner>
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/ib_note_edit_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/ll_note_edit_rank"
+            android:layout_centerHorizontal="true"
+            android:src="@drawable/ic_simple_note"
+            android:layout_marginTop="5dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="5dp"
+            android:scaleType="center"
+            android:background="@color/transparent"
+            />
+
+    </RelativeLayout>
+
+</ScrollView>

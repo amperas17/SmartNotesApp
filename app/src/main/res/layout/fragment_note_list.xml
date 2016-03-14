@@ -1,0 +1,30 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.amperas17.smartnotes.NoteListFragment">
+
+    <ListView
+        android:id="@id/android:list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:divider="#AAA"
+        android:dividerHeight="2dp"
+        android:listSelector="@drawable/list_item_selector"
+        >
+    </ListView>
+
+    <TextView
+        android:id="@id/android:empty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Note list is empty!"
+        android:textSize="24sp"
+        android:layout_centerInParent="true"
+        android:layout_marginBottom="5dp"
+        >
+    </TextView>
+
+
+</RelativeLayout>
