@@ -34,7 +34,7 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
 
     Note mNote;
     String mImagePath;
-    int mRank;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -49,14 +49,22 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
 
         mIvImage = (ImageView)view.findViewById(R.id.iv_note_show_image);
 
-        Bundle arguments = getArguments();
-        if (arguments!=null) {
-            //Log.d(LOG_TAG, "onCreateView" + getArguments().toString());
-            getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, arguments, this);
-        }
+        Log.d(LOG_TAG, "ShowFrag:onCreateView" );
 
         return view;
     }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        Bundle arguments = getArguments();
+        if (arguments!=null) {
+            Log.d(LOG_TAG, "ShowFrag:onCreateView" + getArguments().toString());
+            getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, arguments, this);
+        }
+        super.onActivityCreated(savedInstanceState);
+    }
+
+
 
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.edit_button, menu);

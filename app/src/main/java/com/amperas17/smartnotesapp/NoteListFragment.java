@@ -17,7 +17,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 /**
  *
@@ -30,6 +29,7 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     public enum noteFragType{SHOW,EDIT}
 
     NoteAdapter mNoteAdapter;
+    ListView mListView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -59,8 +59,9 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+        mListView = getListView();
         getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
+        super.onActivityCreated(savedInstanceState);
     }
 
     @Override
@@ -115,7 +116,7 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     @Override
     public void onLoadFinished(Loader loader, Object data) {
         mNoteAdapter = new NoteAdapter(getActivity(),(Cursor) data,0);
-        getListView().setAdapter(mNoteAdapter);
+        mListView.setAdapter(mNoteAdapter);
     }
 
     @Override

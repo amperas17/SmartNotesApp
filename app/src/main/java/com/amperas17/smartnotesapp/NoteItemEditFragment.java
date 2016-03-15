@@ -101,21 +101,17 @@ public class NoteItemEditFragment extends Fragment {
             case R.id.btSaveMenuItem:
 
                 ContentValues cv = new ContentValues();
+                cv.clear();
                 cv.put(NoteDBContract.NoteTable.COLUMN_TITLE, mEtTitle.getText().toString());
                 cv.put(NoteDBContract.NoteTable.COLUMN_CONTENT, mEtContent.getText().toString());
                 cv.put(NoteDBContract.NoteTable.COLUMN_RANK, mNote.mRank);
-
                 if (mIsNoteEditing){
                     Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI,mNote.mId);
                     getActivity().getContentResolver().update(uri, cv, null, null);
-                    Log.d(LOG_TAG, "EditFrag:mIsNoteEditing " );
-
                 } else {
                     getActivity().getContentResolver().insert(NoteDBContract.NoteTable.TABLE_URI, cv);
-                    Log.d(LOG_TAG, "EditFrag:!mIsNoteEditing ");
-
                 }
-                cv.clear();
+
                 getActivity().onBackPressed();
                 return true;
             default:

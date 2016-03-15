@@ -45,14 +45,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        //Log.d(LOG_TAG, "" + getSupportFragmentManager().getBackStackEntryCount());
+        //Log.d(LOG_TAG, "onBackPressed:" + getSupportFragmentManager().getBackStackEntryCount());
         if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
             super.onBackPressed();
         } else {
-            while (getSupportFragmentManager().getBackStackEntryCount()>0) {
-                getSupportFragmentManager().popBackStackImmediate();
-                //Log.d(LOG_TAG, "" + getSupportFragmentManager().getBackStackEntryCount());
-            }
+            getSupportFragmentManager().popBackStack();
         }
     }
 }
