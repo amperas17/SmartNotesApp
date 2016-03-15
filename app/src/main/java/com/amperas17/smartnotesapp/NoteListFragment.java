@@ -2,6 +2,7 @@ package com.amperas17.smartnotesapp;
 
 
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
@@ -9,12 +10,14 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -27,6 +30,10 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     final String LOG_TAG = "myLogs";
 
     public enum noteFragType{SHOW,EDIT}
+    public static final String [] CONTEXT_MENU_ACTIONS = {"Delete","Edit"};
+    public static final int CONTEXT_ACTION_DELETE = 0;
+    public static final int CONTEXT_ACTION_EDIT = 1;
+
 
     NoteAdapter mNoteAdapter;
     ListView mListView;
@@ -58,9 +65,54 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     }
 
     @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        if (v.getId()==android.R.id.list){
+            //AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)menuInfo;
+            //menu.setHeaderTitle(info.position);
+            String[] menuItems = CONTEXT_MENU_ACTIONS;
+            for (int i = 0; i<menuItems.length; i++) {
+                menu.add(Menu.NONE, i, i, menuItems[i]);
+                //menu.add(menuItems[i]);
+
+            }
+        }
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
+        int menuItemIndex = item.getItemId();
+        switch (menuItemIndex){
+            case CONTEXT_ACTION_DELETE:
+
+                break;
+
+            case CONTEXT_ACTION_EDIT:
+                Note note = (Note)info.targetView.findViewById(R.id.tv_list_item_note_id).getTag();
+                Bundle bundle = new Bundle();
+                bundle.putParcelable(Note.NOTE,note);
+                openNoteFragment(noteFragType.EDIT,bundle);
+                break;
+
+            default:
+                break;
+        }
+        Log.d(LOG_TAG, "index: " + ((TextView)info.targetView.findViewById(R.id.tv_list_item_note_id)).getTag().toString());
+        return true;
+    }
+
+    @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         mListView = getListView();
         getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
+
+        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                return false;
+            }
+        });
+        registerForContextMenu(mListView);
         super.onActivityCreated(savedInstanceState);
     }
 

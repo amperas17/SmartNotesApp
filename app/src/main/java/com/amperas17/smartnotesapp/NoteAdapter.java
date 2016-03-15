@@ -51,14 +51,12 @@ public class NoteAdapter extends CursorAdapter{
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder holder = (ViewHolder)view.getTag();
         if (holder != null){
+            Note note = new Note(cursor);
+            holder.tvId.setText(note.mId.toString());
+            holder.tvId.setTag(note);
 
-            holder.tvId.setText(cursor.getString(cursor
-                    .getColumnIndex(NoteDBContract.NoteTable._ID)).toString());
-
-            String imagePath = cursor.getString(cursor
-                    .getColumnIndex(NoteDBContract.NoteTable.COLUMN_IMAGE_PATH));
-            if (imagePath != null){
-                File file = new File(imagePath);
+            if (note.mImagePath != null){
+                File file = new File(note.mImagePath);
 
                 mPicasso.with(context)
                         .load(file)
@@ -71,12 +69,9 @@ public class NoteAdapter extends CursorAdapter{
                 holder.ivImage.setImageResource(R.drawable.ic_simple_note);
             }
 
-            holder.tvTitle.setText(cursor.getString(cursor
-                    .getColumnIndex(NoteDBContract.NoteTable.COLUMN_TITLE)));
+            holder.tvTitle.setText(note.mTitle);
 
-            int rank = cursor.getInt(cursor
-                    .getColumnIndex(NoteDBContract.NoteTable.COLUMN_RANK));
-            switch (rank){
+            switch (note.mRank){
                 case NoteDBContract.NoteTable.NO_PRIORITY:
                     holder.ivPriority.setImageResource(R.drawable.ic_white_pin);
                     break;
