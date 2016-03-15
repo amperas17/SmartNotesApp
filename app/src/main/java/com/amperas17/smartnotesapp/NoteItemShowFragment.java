@@ -25,7 +25,7 @@ import com.squareup.picasso.Picasso;
  */
 public class NoteItemShowFragment extends Fragment implements LoaderManager.LoaderCallbacks{
     final static Integer LOADER_ID = 2;
-    final String EDIT_NOTE_Transaction_TAG = "editNote";
+    final String EDIT_NOTE_TRANSACTION_TAG = "editNote";
 
     final String LOG_TAG = "myLogs";
 
@@ -68,6 +68,7 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
 
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.edit_button, menu);
+        inflater.inflate(R.menu.delete_button, menu);
     }
 
     @Override
@@ -81,13 +82,19 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
                 fragment.setArguments(bundle);
 
                 getActivity().getSupportFragmentManager().beginTransaction()
-                        .addToBackStack(EDIT_NOTE_Transaction_TAG)
+                        .addToBackStack(EDIT_NOTE_TRANSACTION_TAG)
                         .setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left,
                                 R.anim.enter_from_left, R.anim.exit_to_right)
                         .replace(R.id.fl_note_list_container, fragment)
                         .commit();
 
                 return true;
+
+            case R.id.btDeleteMenuItem:
+                Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI, mNote.mId);
+                getActivity().getSupportLoaderManager().destroyLoader(LOADER_ID);
+                getActivity().getContentResolver().delete(uri, null, null);
+                getActivity().onBackPressed();
             default:
                 return super.onOptionsItemSelected(item);
         }
