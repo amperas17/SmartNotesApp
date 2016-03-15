@@ -94,7 +94,6 @@ public class NoteProvider extends ContentProvider {
                 if(_id > 0){
                     returnUri =  NoteDBContract.NoteTable.buildCategoryUri(_id);
                 } else{
-                    //returnUri = Uri.parse("Error");
                     throw new UnsupportedOperationException("[provider:insert]Unable to insert rows into: " + uri);
                 }
                 break;
@@ -117,10 +116,17 @@ public class NoteProvider extends ContentProvider {
 
         switch(sUriMatcher.match(uri)){
             case NOTE:
-                rows = db.update(NoteDBContract.NoteTable.TABLE_NAME, values, selection, selectionArgs);
+                rows = db.update(NoteDBContract.NoteTable.TABLE_NAME,
+                        values,
+                        selection,
+                        selectionArgs);
                 break;
             case NOTE_ID:
-                rows = db.update(NoteDBContract.NoteTable.TABLE_NAME, values, selection, selectionArgs);
+                long _id = ContentUris.parseId(uri);
+                rows = db.update(NoteDBContract.NoteTable.TABLE_NAME,
+                        values,
+                        NoteDBContract.NoteTable._ID + " = ?",
+                        new String[]{String.valueOf(_id)});
                 break;
             default:
                 throw new UnsupportedOperationException("[update]Unknown uri: " + uri);

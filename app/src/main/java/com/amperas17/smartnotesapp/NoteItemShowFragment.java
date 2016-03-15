@@ -17,22 +17,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
-
-import java.io.File;
 
 /**
  *
  */
 public class NoteItemShowFragment extends Fragment implements LoaderManager.LoaderCallbacks{
     final static Integer LOADER_ID = 2;
+    final String EDIT_NOTE_Transaction_TAG = "editNote";
+
     final String LOG_TAG = "myLogs";
 
     TextView mTvTitle,mTvContent,mTvRank;
     ImageView mIvImage;
 
+    Note mNote;
     String mImagePath;
     int mRank;
 
@@ -42,6 +42,7 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
         View view = inflater.inflate(R.layout.fragment_note_item_show, container, false);
         setHasOptionsMenu(true);
 
+        mNote = new Note();
         mTvTitle = (TextView)view.findViewById(R.id.tv_note_show_title);
         mTvContent = (TextView)view.findViewById(R.id.tv_note_show_content);
         mTvRank = (TextView)view.findViewById(R.id.tv_note_show_rank);
@@ -50,7 +51,7 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
 
         Bundle arguments = getArguments();
         if (arguments!=null) {
-            Log.d(LOG_TAG, "onCreateView" + getArguments().toString());
+            //Log.d(LOG_TAG, "onCreateView" + getArguments().toString());
             getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, arguments, this);
         }
 
@@ -66,13 +67,13 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
         switch (item.getItemId()) {
             case R.id.btEditMenuItem:
                 Fragment fragment = new NoteItemEditFragment();
+
                 Bundle bundle = new Bundle();
-                Note note = new Note(0,mTvTitle.getText().toString(),
-                        mTvContent.getText().toString(),mRank,0,mImagePath,0,0);
-                bundle.putParcelable(Note.NOTE,note);
+                bundle.putParcelable(Note.NOTE,mNote);
                 fragment.setArguments(bundle);
+
                 getActivity().getSupportFragmentManager().beginTransaction()
-                        .addToBackStack("editNote")
+                        .addToBackStack(EDIT_NOTE_Transaction_TAG)
                         .setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left,
                                 R.anim.enter_from_left, R.anim.exit_to_right)
                         .replace(R.id.fl_note_list_container, fragment)
@@ -97,20 +98,15 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
     public void onLoadFinished(Loader loader, Object data) {
         Cursor cursor = (Cursor) data;
         cursor.moveToFirst();
+        mNote = new Note(cursor);
 
-        mTvTitle.setText(cursor.getString(cursor
-                .getColumnIndex(NoteDBContract.NoteTable.COLUMN_TITLE)));
+        mTvTitle.setText(mNote.mTitle);
 
-        mTvContent.setText(cursor.getString(cursor
-                .getColumnIndex(NoteDBContract.NoteTable.COLUMN_CONTENT)));
+        mTvContent.setText(mNote.mContent);
 
-        int rank_number = cursor.getInt(cursor
-                .getColumnIndex(NoteDBContract.NoteTable.COLUMN_RANK));
-        mRank = rank_number;
-        mTvRank.setText(NoteDBContract.NoteTable.PRIORITIES[rank_number]);
+        mTvRank.setText(NoteDBContract.NoteTable.PRIORITIES[mNote.mRank]);
 
-        String imagePath = cursor.getString(cursor
-                .getColumnIndex(NoteDBContract.NoteTable.COLUMN_IMAGE_PATH));
+        String imagePath = mNote.mImagePath;
         if (imagePath != null){
             mImagePath = imagePath;
             Picasso.with(getActivity())

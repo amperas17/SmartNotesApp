@@ -1,6 +1,8 @@
 package com.amperas17.smartnotesapp;
 
+import android.content.ContentUris;
 import android.content.ContentValues;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -15,7 +17,6 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Spinner;
-import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -29,9 +30,9 @@ public class NoteItemEditFragment extends Fragment {
     Spinner mSpinner;
     ImageButton mIbImage;
 
-    Boolean mIsEditing;
+    Boolean mIsNoteEditing;
+    Note mNote;
 
-    int mRank;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -41,7 +42,7 @@ public class NoteItemEditFragment extends Fragment {
         mEtTitle = (EditText)view.findViewById(R.id.et_note_edit_title);
         mEtContent = (EditText)view.findViewById(R.id.et_note_edit_content);
 
-        mRank = NoteDBContract.NoteTable.NO_PRIORITY;
+        mNote = new Note();
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_spinner_item, NoteDBContract.NoteTable.PRIORITIES);
@@ -54,9 +55,8 @@ public class NoteItemEditFragment extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view,
                                        int position, long id) {
-                mRank = position;
-            }
-
+                mNote.mRank = position;
+           }
             @Override
             public void onNothingSelected(AdapterView<?> arg0) {
             }
@@ -66,16 +66,16 @@ public class NoteItemEditFragment extends Fragment {
 
         Bundle arguments = getArguments();
         if (arguments!=null){
-            mIsEditing = true;
+            mIsNoteEditing = true;
             Log.d(LOG_TAG, "EditFrag:onCreateView " + arguments.getParcelable(Note.NOTE));
-            Note note = arguments.getParcelable(Note.NOTE);
-            mEtTitle.setText(note.mTitle);
-            mEtContent.setText(note.mContent);
-            mSpinner.setSelection(note.mRank);
+            mNote = arguments.getParcelable(Note.NOTE);
+            mEtTitle.setText(mNote.mTitle);
+            mEtContent.setText(mNote.mContent);
+            mSpinner.setSelection(mNote.mRank);
 
-            if (note.mImagePath!=null){
+            if (mNote.mImagePath!=null){
                 Picasso.with(getActivity())
-                        .load(note.mImagePath)
+                        .load(mNote.mImagePath)
                         .placeholder(R.drawable.ic_simple_note)
                         .error(R.drawable.ic_simple_note)
                         .centerInside()
@@ -85,9 +85,8 @@ public class NoteItemEditFragment extends Fragment {
             }
 
         } else {
-            mIsEditing = false;
+            mIsNoteEditing = false;
         }
-
 
         return view;
     }
@@ -103,11 +102,20 @@ public class NoteItemEditFragment extends Fragment {
 
                 ContentValues cv = new ContentValues();
                 cv.put(NoteDBContract.NoteTable.COLUMN_TITLE, mEtTitle.getText().toString());
-                cv.put(NoteDBContract.NoteTable.COLUMN_CONTENT,mEtContent.getText().toString());
-                cv.put(NoteDBContract.NoteTable.COLUMN_RANK,mRank);
+                cv.put(NoteDBContract.NoteTable.COLUMN_CONTENT, mEtContent.getText().toString());
+                cv.put(NoteDBContract.NoteTable.COLUMN_RANK, mNote.mRank);
 
-                getActivity().getContentResolver().insert(NoteDBContract.NoteTable.TABLE_URI,cv);
+                if (mIsNoteEditing){
+                    Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI,mNote.mId);
+                    getActivity().getContentResolver().update(uri, cv, null, null);
+                    Log.d(LOG_TAG, "EditFrag:mIsNoteEditing " );
 
+                } else {
+                    getActivity().getContentResolver().insert(NoteDBContract.NoteTable.TABLE_URI, cv);
+                    Log.d(LOG_TAG, "EditFrag:!mIsNoteEditing ");
+
+                }
+                cv.clear();
                 getActivity().onBackPressed();
                 return true;
             default:
