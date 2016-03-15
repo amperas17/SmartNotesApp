@@ -2,6 +2,7 @@ package com.amperas17.smartnotesapp;
 
 import android.content.ContentUris;
 import android.database.Cursor;
+import android.database.CursorIndexOutOfBoundsException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -17,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -25,7 +27,9 @@ import com.squareup.picasso.Picasso;
  */
 public class NoteItemShowFragment extends Fragment implements LoaderManager.LoaderCallbacks{
     final static Integer LOADER_ID = 2;
-    final String EDIT_NOTE_Transaction_TAG = "editNote";
+    final static Integer DELETED_NOTE_ID = -1;
+
+    final String EDIT_NOTE_TRANSACTION_TAG = "editNote";
 
     final String LOG_TAG = "myLogs";
 
@@ -68,30 +72,46 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
 
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.edit_button, menu);
+        inflater.inflate(R.menu.delete_button, menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.btEditMenuItem:
-                Fragment fragment = new NoteItemEditFragment();
+                if (mNote.mId!=-1) {
+                    Fragment fragment = new NoteItemEditFragment();
 
-                Bundle bundle = new Bundle();
-                bundle.putParcelable(Note.NOTE,mNote);
-                fragment.setArguments(bundle);
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable(Note.NOTE, mNote);
+                    fragment.setArguments(bundle);
 
-                getActivity().getSupportFragmentManager().beginTransaction()
-                        .addToBackStack(EDIT_NOTE_Transaction_TAG)
-                        .setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left,
-                                R.anim.enter_from_left, R.anim.exit_to_right)
-                        .replace(R.id.fl_note_list_container, fragment)
-                        .commit();
+                    getActivity().getSupportFragmentManager().beginTransaction()
+                            .addToBackStack(EDIT_NOTE_TRANSACTION_TAG)
+                            .setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left,
+                                    R.anim.enter_from_left, R.anim.exit_to_right)
+                            .replace(R.id.fl_note_list_container, fragment)
+                            .commit();
+                } else {
+                    Toast.makeText(getActivity(),"Note was deleted!",Toast.LENGTH_SHORT).show();
+                }
+                return true;
 
+            case R.id.btDeleteMenuItem:
+                if (mNote.mId!=-1) {
+                    Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI, mNote.mId);
+                    getActivity().getSupportLoaderManager().destroyLoader(LOADER_ID);
+                    getActivity().getContentResolver().delete(uri, null, null);
+                    getActivity().onBackPressed();
+                } else {
+                    Toast.makeText(getActivity(),"Note was deleted!",Toast.LENGTH_SHORT).show();
+                }
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
+
 
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
@@ -106,26 +126,31 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
     public void onLoadFinished(Loader loader, Object data) {
         Cursor cursor = (Cursor) data;
         cursor.moveToFirst();
-        mNote = new Note(cursor);
+        try {
+            mNote = new Note(cursor);
+        } catch (CursorIndexOutOfBoundsException ex){
+            mNote = new Note(DELETED_NOTE_ID,"Deleted","Note was deleted",
+                    NoteDBContract.NoteTable.NO_PRIORITY,0,null,0,0);
 
-        mTvTitle.setText(mNote.mTitle);
-
-        mTvContent.setText(mNote.mContent);
-
-        mTvRank.setText(NoteDBContract.NoteTable.PRIORITIES[mNote.mRank]);
-
-        String imagePath = mNote.mImagePath;
-        if (imagePath != null){
-            mImagePath = imagePath;
-            Picasso.with(getActivity())
-                    .load(imagePath)
-                    .placeholder(R.drawable.ic_simple_note)
-                    .error(R.drawable.ic_simple_note)
-                    .centerInside()
-                    .into(mIvImage);
-        } else {
-            mIvImage.setImageResource(R.drawable.ic_simple_note);
         }
+            mTvTitle.setText(mNote.mTitle);
+
+            mTvContent.setText(mNote.mContent);
+
+            mTvRank.setText(NoteDBContract.NoteTable.PRIORITIES[mNote.mRank]);
+
+            String imagePath = mNote.mImagePath;
+            if (imagePath != null) {
+                mImagePath = imagePath;
+                Picasso.with(getActivity())
+                        .load(imagePath)
+                        .placeholder(R.drawable.ic_simple_note)
+                        .error(R.drawable.ic_simple_note)
+                        .centerInside()
+                        .into(mIvImage);
+            } else {
+                mIvImage.setImageResource(R.drawable.ic_simple_note);
+            }
     }
 
     @Override

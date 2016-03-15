@@ -85,6 +85,7 @@ public class NoteItemEditFragment extends Fragment {
             }
 
         } else {
+            Log.d(LOG_TAG, "EditFrag:onCreateView null");
             mIsNoteEditing = false;
         }
 
@@ -93,18 +94,20 @@ public class NoteItemEditFragment extends Fragment {
 
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.save_button, menu);
+        inflater.inflate(R.menu.delete_button, menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.btSaveMenuItem:
-
                 ContentValues cv = new ContentValues();
                 cv.clear();
+
                 cv.put(NoteDBContract.NoteTable.COLUMN_TITLE, mEtTitle.getText().toString());
                 cv.put(NoteDBContract.NoteTable.COLUMN_CONTENT, mEtContent.getText().toString());
                 cv.put(NoteDBContract.NoteTable.COLUMN_RANK, mNote.mRank);
+
                 if (mIsNoteEditing){
                     Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI,mNote.mId);
                     getActivity().getContentResolver().update(uri, cv, null, null);
@@ -114,9 +117,24 @@ public class NoteItemEditFragment extends Fragment {
 
                 getActivity().onBackPressed();
                 return true;
+            case R.id.btDeleteMenuItem:
+                if (mIsNoteEditing) {
+                    Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI, mNote.mId);
+                    getActivity().getContentResolver().delete(uri, null, null);
+
+                    //I think it is a crutch or hardcode, but it work properly
+                    while (getActivity().getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                        getActivity().getSupportFragmentManager().popBackStackImmediate();
+                    }
+                } else{
+                    getActivity().onBackPressed();
+                }
+
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
+
 
 }

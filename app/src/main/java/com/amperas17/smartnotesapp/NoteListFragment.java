@@ -1,8 +1,10 @@
 package com.amperas17.smartnotesapp;
 
 
+import android.content.ContentUris;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
@@ -30,6 +32,9 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     final String LOG_TAG = "myLogs";
 
     public enum noteFragType{SHOW,EDIT}
+    final String EDIT_NOTE_TRANSACTION_TAG = "editNote";
+    final String SHOW_NOTE_TRANSACTION_TAG = "showNote";
+
     public static final String [] CONTEXT_MENU_ACTIONS = {"Delete","Edit"};
     public static final int CONTEXT_ACTION_DELETE = 0;
     public static final int CONTEXT_ACTION_EDIT = 1;
@@ -82,13 +87,15 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
         int menuItemIndex = item.getItemId();
+        Note note = (Note)info.targetView.findViewById(R.id.tv_list_item_note_id).getTag();
+
         switch (menuItemIndex){
             case CONTEXT_ACTION_DELETE:
-
+                Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI, note.mId);
+                getActivity().getContentResolver().delete(uri,null,null);
                 break;
 
             case CONTEXT_ACTION_EDIT:
-                Note note = (Note)info.targetView.findViewById(R.id.tv_list_item_note_id).getTag();
                 Bundle bundle = new Bundle();
                 bundle.putParcelable(Note.NOTE,note);
                 openNoteFragment(noteFragType.EDIT,bundle);
@@ -128,27 +135,27 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     }
 
     public void openNoteFragment(noteFragType fragmentType,Bundle bundle){
-        final String SHOW_NOTE = "showNote";
-        final String EDIT_NOTE = "editNote";
-
-        Fragment fragment = null;
-        String stackTag = "";
+        Fragment fragment;
+        String transactionTag;
 
         switch (fragmentType){
             case SHOW:
                 fragment = new NoteItemShowFragment();
-                stackTag = SHOW_NOTE;
+                transactionTag = SHOW_NOTE_TRANSACTION_TAG;
                 break;
             case EDIT:
                 fragment = new NoteItemEditFragment();
-                stackTag = EDIT_NOTE;
+                transactionTag = EDIT_NOTE_TRANSACTION_TAG;
                 break;
+            default:
+                fragment = null;
+                transactionTag = "";
         }
 
         if (fragment != null) {
             fragment.setArguments(bundle);
             getActivity().getSupportFragmentManager().beginTransaction()
-                    .addToBackStack(stackTag)
+                    .addToBackStack(transactionTag)
                     .setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left,
                             R.anim.enter_from_left, R.anim.exit_to_right)
                     .replace(R.id.fl_note_list_container, fragment)

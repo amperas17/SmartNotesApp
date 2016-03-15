@@ -53,7 +53,8 @@ public class Note implements Parcelable {
     }
 
     public Note(Cursor cursor){
-        mId = cursor.getInt(cursor.getColumnIndex(NoteDBContract.NoteTable._ID));
+        mId = cursor.getInt(cursor
+                .getColumnIndex(NoteDBContract.NoteTable._ID));
         mTitle = cursor.getString(cursor
                 .getColumnIndex(NoteDBContract.NoteTable.COLUMN_TITLE));
         mContent = cursor.getString(cursor
