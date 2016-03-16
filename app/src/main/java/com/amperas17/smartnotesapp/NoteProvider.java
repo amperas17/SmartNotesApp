@@ -156,6 +156,13 @@ public class NoteProvider extends ContentProvider {
                         new String[]{String.valueOf(_id)});
                 Log.d(LOG_TAG, "deleted " + rows + " Note ");
                 break;
+            case NOTE_ID:
+                long _id = ContentUris.parseId(uri);
+                rows = db.delete(NoteDBContract.NoteTable.TABLE_NAME,
+                        NoteDBContract.NoteTable._ID + " = ?",
+                        new String[]{String.valueOf(_id)});
+                Log.d(LOG_TAG, "deleted " + rows + " Category ");
+                break;
 
             default:
                 throw new UnsupportedOperationException("[provider:delete]Unknown uri: " + uri);
