@@ -88,15 +88,15 @@ public class NoteProvider extends ContentProvider {
         switch(sUriMatcher.match(uri)){
             case NOTE:
 
-                _id = db.insert(NoteDBContract.NoteTable.TABLE_NAME, null, values);
-                Log.d(LOG_TAG,"Insert - id= "+_id);
+            _id = db.insert(NoteDBContract.NoteTable.TABLE_NAME, null, values);
+            Log.d(LOG_TAG,"Insert - id= "+_id);
 
-                if(_id > 0){
-                    returnUri =  NoteDBContract.NoteTable.buildCategoryUri(_id);
-                } else{
-                    throw new UnsupportedOperationException("[provider:insert]Unable to insert rows into: " + uri);
-                }
-                break;
+            if(_id > 0){
+                returnUri =  NoteDBContract.NoteTable.buildCategoryUri(_id);
+            } else{
+                throw new UnsupportedOperationException("[provider:insert]Unable to insert rows into: " + uri);
+            }
+            break;
 
             default:
                 throw new UnsupportedOperationException("[provider:insert]Unknown uri: " + uri);
@@ -147,14 +147,14 @@ public class NoteProvider extends ContentProvider {
         switch(sUriMatcher.match(uri)) {
             case NOTE:
                 rows = db.delete(NoteDBContract.NoteTable.TABLE_NAME, selection, selectionArgs);
-                Log.d(LOG_TAG, "deleted " + rows + " Category ");
+                Log.d(LOG_TAG, "deleted " + rows + " Note ");
                 break;
             case NOTE_ID:
                 long _id = ContentUris.parseId(uri);
                 rows = db.delete(NoteDBContract.NoteTable.TABLE_NAME,
                         NoteDBContract.NoteTable._ID + " = ?",
                         new String[]{String.valueOf(_id)});
-                Log.d(LOG_TAG, "deleted " + rows + " Category ");
+                Log.d(LOG_TAG, "deleted " + rows + " Note ");
                 break;
 
             default:

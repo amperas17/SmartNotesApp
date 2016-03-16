@@ -3,7 +3,6 @@ package com.amperas17.smartnotesapp;
 
 import android.content.ContentUris;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -97,7 +96,7 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
 
             case CONTEXT_ACTION_EDIT:
                 Bundle bundle = new Bundle();
-                bundle.putParcelable(Note.NOTE,note);
+                bundle.putParcelable(Note.NOTE_TAG,note);
                 openNoteFragment(noteFragType.EDIT,bundle);
                 break;
 

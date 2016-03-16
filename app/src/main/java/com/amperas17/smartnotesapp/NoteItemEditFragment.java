@@ -5,7 +5,10 @@ import android.content.ContentValues;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -17,6 +20,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
@@ -25,13 +29,16 @@ import com.squareup.picasso.Picasso;
  */
 public class NoteItemEditFragment extends Fragment {
     final String LOG_TAG = "myLogs";
+    public  static final String INITIAL_NOTE_TAG = "initNote";
+    public  static final String IS_EDITING_TAG = "isEditing";
+
 
     EditText mEtTitle,mEtContent;
     Spinner mSpinner;
     ImageButton mIbImage;
 
     Boolean mIsNoteEditing;
-    Note mNote;
+    Note mNote,mInitialNote;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -39,10 +46,43 @@ public class NoteItemEditFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_note_item_edit, container, false);
         setHasOptionsMenu(true);
 
-        mEtTitle = (EditText)view.findViewById(R.id.et_note_edit_title);
-        mEtContent = (EditText)view.findViewById(R.id.et_note_edit_content);
-
         mNote = new Note();
+        mInitialNote = new Note();
+
+        mEtTitle = (EditText)view.findViewById(R.id.et_note_edit_title);
+        mEtTitle.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                mNote.mTitle = s.toString();
+                //Log.d(LOG_TAG,s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+        mEtContent = (EditText)view.findViewById(R.id.et_note_edit_content);
+        mEtContent.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                mNote.mContent = s.toString();
+                //Log.d(LOG_TAG,s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_spinner_item, NoteDBContract.NoteTable.PRIORITIES);
@@ -64,35 +104,65 @@ public class NoteItemEditFragment extends Fragment {
 
         mIbImage = (ImageButton)view.findViewById(R.id.ib_note_edit_image);
 
-        Bundle arguments = getArguments();
-        if (arguments!=null){
-            mIsNoteEditing = true;
-            Log.d(LOG_TAG, "EditFrag:onCreateView " + arguments.getParcelable(Note.NOTE));
-            mNote = arguments.getParcelable(Note.NOTE);
-            mEtTitle.setText(mNote.mTitle);
-            mEtContent.setText(mNote.mContent);
-            mSpinner.setSelection(mNote.mRank);
-
-            if (mNote.mImagePath!=null){
-                Picasso.with(getActivity())
-                        .load(mNote.mImagePath)
-                        .placeholder(R.drawable.ic_simple_note)
-                        .error(R.drawable.ic_simple_note)
-                        .centerInside()
-                        .into(mIbImage);
-            } else {
-                mIbImage.setImageResource(R.drawable.ic_simple_note);
-            }
-
-        } else {
-            Log.d(LOG_TAG, "EditFrag:onCreateView null");
-            mIsNoteEditing = false;
-        }
 
         return view;
     }
 
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        if (savedInstanceState==null) {
+
+            Bundle arguments = getArguments();
+            if (arguments != null) {
+                mIsNoteEditing = true;
+                Log.d(LOG_TAG, "EditFrag:onActivityCreated " + arguments.getParcelable(Note.NOTE_TAG));
+                mNote = arguments.getParcelable(Note.NOTE_TAG);
+                try {
+                    mInitialNote = mNote.clone();
+                } catch (CloneNotSupportedException e) {
+                    e.printStackTrace();
+                }
+
+            } else {
+                Log.d(LOG_TAG, "EditFrag:onActivityCreated arguments = null");
+                mIsNoteEditing = false;
+            }
+        } else {
+            mIsNoteEditing = savedInstanceState.getBoolean(IS_EDITING_TAG);
+            mNote = savedInstanceState.getParcelable(Note.NOTE_TAG);
+            mInitialNote = savedInstanceState.getParcelable(INITIAL_NOTE_TAG);
+        }
+
+        mEtTitle.setText(mNote.mTitle);
+        mEtContent.setText(mNote.mContent);
+        mSpinner.setSelection(mNote.mRank);
+
+        if (mNote.mImagePath != null) {
+            Picasso.with(getActivity())
+                    .load(mNote.mImagePath)
+                    .placeholder(R.drawable.ic_simple_note)
+                    .error(R.drawable.ic_simple_note)
+                    .centerInside()
+                    .into(mIbImage);
+        } else {
+            mIbImage.setImageResource(R.drawable.ic_simple_note);
+        }
+
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        //Log.d(LOG_TAG,"onSaveInstanceState: "+mNote.toString()+" /---/ "+mInitialNote.toString());
+        outState.putBoolean(INITIAL_NOTE_TAG, mIsNoteEditing);
+        outState.putParcelable(Note.NOTE_TAG,mNote);
+        outState.putParcelable(INITIAL_NOTE_TAG, mInitialNote);
+
+        super.onSaveInstanceState(outState);
+    }
+
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.undo_button, menu);
         inflater.inflate(R.menu.save_button, menu);
         inflater.inflate(R.menu.delete_button, menu);
     }
@@ -104,8 +174,8 @@ public class NoteItemEditFragment extends Fragment {
                 ContentValues cv = new ContentValues();
                 cv.clear();
 
-                cv.put(NoteDBContract.NoteTable.COLUMN_TITLE, mEtTitle.getText().toString());
-                cv.put(NoteDBContract.NoteTable.COLUMN_CONTENT, mEtContent.getText().toString());
+                cv.put(NoteDBContract.NoteTable.COLUMN_TITLE, mNote.mTitle);
+                cv.put(NoteDBContract.NoteTable.COLUMN_CONTENT, mNote.mContent);
                 cv.put(NoteDBContract.NoteTable.COLUMN_RANK, mNote.mRank);
 
                 if (mIsNoteEditing){
@@ -131,6 +201,22 @@ public class NoteItemEditFragment extends Fragment {
                 }
 
                 return true;
+
+            case R.id.btUndoMenuItem:
+                //Log.d(LOG_TAG,"Undo: "+mNote.toString()+" /---/ "+mInitialNote.toString());
+                //Log.d(LOG_TAG,"Undo: "+mNote.equals(mInitialNote));
+                if (!mNote.equals(mInitialNote)){
+                    mEtTitle.setText(mInitialNote.mTitle);
+                    mEtContent.setText(mInitialNote.mContent);
+                    mSpinner.setSelection(mInitialNote.mRank);
+                    try {
+                        mNote = mInitialNote.clone();
+                    } catch (CloneNotSupportedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }

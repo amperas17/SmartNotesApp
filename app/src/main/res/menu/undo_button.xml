@@ -2,10 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/btDeleteMenuItem"
+        android:id="@+id/btUndoMenuItem"
         app:showAsAction="always"
-        android:title="delete"
-        android:icon="@drawable/ic_delete"
+        android:title="undo"
+        android:icon="@drawable/ic_undo"
         >
     </item>
 </menu>

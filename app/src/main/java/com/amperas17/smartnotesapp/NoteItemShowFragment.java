@@ -83,7 +83,7 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
                     Fragment fragment = new NoteItemEditFragment();
 
                     Bundle bundle = new Bundle();
-                    bundle.putParcelable(Note.NOTE, mNote);
+                    bundle.putParcelable(Note.NOTE_TAG, mNote);
                     fragment.setArguments(bundle);
 
                     getActivity().getSupportFragmentManager().beginTransaction()
@@ -93,7 +93,7 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
                             .replace(R.id.fl_note_list_container, fragment)
                             .commit();
                 } else {
-                    Toast.makeText(getActivity(),"Note was deleted!",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Note was deleted!", Toast.LENGTH_SHORT).show();
                 }
                 return true;
 
@@ -104,7 +104,7 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
                     getActivity().getContentResolver().delete(uri, null, null);
                     getActivity().onBackPressed();
                 } else {
-                    Toast.makeText(getActivity(),"Note was deleted!",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Note was deleted!", Toast.LENGTH_SHORT).show();
                 }
                 return true;
             default:
@@ -131,26 +131,25 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
         } catch (CursorIndexOutOfBoundsException ex){
             mNote = new Note(DELETED_NOTE_ID,"Deleted","Note was deleted",
                     NoteDBContract.NoteTable.NO_PRIORITY,0,null,0,0);
-
         }
-            mTvTitle.setText(mNote.mTitle);
+        mTvTitle.setText(mNote.mTitle);
 
-            mTvContent.setText(mNote.mContent);
+        mTvContent.setText(mNote.mContent);
 
-            mTvRank.setText(NoteDBContract.NoteTable.PRIORITIES[mNote.mRank]);
+        mTvRank.setText(NoteDBContract.NoteTable.PRIORITIES[mNote.mRank]);
 
-            String imagePath = mNote.mImagePath;
-            if (imagePath != null) {
-                mImagePath = imagePath;
-                Picasso.with(getActivity())
-                        .load(imagePath)
-                        .placeholder(R.drawable.ic_simple_note)
-                        .error(R.drawable.ic_simple_note)
-                        .centerInside()
-                        .into(mIvImage);
-            } else {
-                mIvImage.setImageResource(R.drawable.ic_simple_note);
-            }
+        String imagePath = mNote.mImagePath;
+        if (imagePath != null) {
+            mImagePath = imagePath;
+            Picasso.with(getActivity())
+                   .load(imagePath)
+                   .placeholder(R.drawable.ic_simple_note)
+                   .error(R.drawable.ic_simple_note)
+                   .centerInside()
+                   .into(mIvImage);
+        } else {
+            mIvImage.setImageResource(R.drawable.ic_simple_note);
+        }
     }
 
     @Override

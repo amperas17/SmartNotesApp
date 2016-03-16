@@ -3,15 +3,16 @@ package com.amperas17.smartnotesapp;
 import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 /**
  * Created by Вова on 15.03.2016.
  */
-public class Note implements Parcelable {
-    public  static final String NOTE = "note";
+public class Note implements Parcelable,Cloneable {
+    public  static final String NOTE_TAG = "note";
 
     public Integer mId;
-    public String mTitle;
+    protected String mTitle;
     public String mContent;
     public Integer mRank;
     public Integer mCreated;
@@ -21,9 +22,9 @@ public class Note implements Parcelable {
 
     public Note(){
         mId = null;
-        mTitle = null;
-        mContent = null;
-        mRank = null;
+        mTitle = "";
+        mContent = "";
+        mRank = 0;
         mCreated = null;
         mImagePath = null;
         mLatitude = null;
@@ -106,4 +107,23 @@ public class Note implements Parcelable {
         return mId+" "+mTitle+" "+mContent+" "+mRank+" "+
                 mCreated+" "+mImagePath+" "+mLatitude+" "+mLongitude;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        Note note = (Note) o;
+        if (note.mTitle.equals(this.mTitle) &&
+                note.mContent.equals(this.mContent) &&
+                note.mRank == this.mRank){
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    @Override
+    public Note clone() throws CloneNotSupportedException {
+        return (Note) super.clone();
+    }
+
 }
