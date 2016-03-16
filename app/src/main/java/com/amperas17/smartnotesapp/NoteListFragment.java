@@ -2,8 +2,8 @@ package com.amperas17.smartnotesapp;
 
 
 import android.content.ContentUris;
+import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -22,6 +22,18 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.gson.Gson;
+
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+
+import ru.bartwell.exfilepicker.ExFilePicker;
+import ru.bartwell.exfilepicker.ExFilePickerParcelObject;
 
 /**
  *
@@ -32,22 +44,31 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     final String LOG_TAG = "myLogs";
 
     public enum noteFragType{SHOW,EDIT}
+
     final String EDIT_NOTE_TRANSACTION_TAG = "editNote";
     final String SHOW_NOTE_TRANSACTION_TAG = "showNote";
 
-    public static final String [] CONTEXT_MENU_ACTIONS = {"Delete","Edit"};
+    public static final String [] CONTEXT_MENU_ACTIONS = {"Delete","Edit","Save file"};
+
     public static final int CONTEXT_ACTION_DELETE = 0;
     public static final int CONTEXT_ACTION_EDIT = 1;
+    public static final int CONTEXT_ACTION_SAVE_FILE = 2;
+
+    private static final int SINGLE_DIRECTOTY_PICKER_RESULT = 0;
+
 
 
     NoteAdapter mNoteAdapter;
     ListView mListView;
+    Note mSavingNote;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_note_list, container, false);
         setHasOptionsMenu(true);
+
+        mSavingNote = new Note();
 
         Log.d(LOG_TAG, "NoteFrag:onCreateView");
         return view;
@@ -73,12 +94,10 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         if (v.getId()==android.R.id.list){
             //AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)menuInfo;
-            //menu.setHeaderTitle(info.position);
+            menu.setHeaderTitle("Choose action:");
             String[] menuItems = CONTEXT_MENU_ACTIONS;
             for (int i = 0; i<menuItems.length; i++) {
                 menu.add(Menu.NONE, i, i, menuItems[i]);
-                //menu.add(menuItems[i]);
-
             }
         }
     }
@@ -101,12 +120,53 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
                 openNoteFragment(noteFragType.EDIT,bundle);
                 break;
 
+            case CONTEXT_ACTION_SAVE_FILE:
+                //saveFile("file.txt",note);
+                //FileSaver.storeTextFile(getActivity(),note);
+                try {
+                    mSavingNote = note.clone();
+                } catch (CloneNotSupportedException e) {
+                    e.printStackTrace();
+                }
+                openFileDialog();
+                break;
             default:
                 break;
         }
-        Log.d(LOG_TAG, "index: " + ((TextView)info.targetView.findViewById(R.id.tv_list_item_note_id)).getTag().toString());
+        //Log.d(LOG_TAG, "ContextListMenu: Tag = " + ((TextView)info.targetView.findViewById(R.id.tv_list_item_note_id)).getTag().toString());
         return true;
     }
+
+    private void openFileDialog() {
+       Intent intent = new Intent(getActivity().getApplicationContext(),
+               ru.bartwell.exfilepicker.ExFilePickerActivity.class);
+       intent.putExtra(ExFilePicker.SET_ONLY_ONE_ITEM, true);
+       intent.putExtra(ExFilePicker.SET_CHOICE_TYPE, ExFilePicker.CHOICE_TYPE_DIRECTORIES);
+       startActivityForResult(intent, SINGLE_DIRECTOTY_PICKER_RESULT);
+    }
+
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SINGLE_DIRECTOTY_PICKER_RESULT) {
+            if (data != null) {
+                ExFilePickerParcelObject object = data
+                        .getParcelableExtra(ExFilePickerParcelObject.class.getCanonicalName());
+                try {
+                    String directoryPath = object.path + object.names.get(0);
+                    String filePath = directoryPath +'/' + mSavingNote.mTitle;
+                    
+                    FileSaver fileSaver = new FileSaver(getActivity());
+                    fileSaver.saveFile(filePath, mSavingNote, FileSaver.fileType.TXT_FILE);
+                } catch (IndexOutOfBoundsException e){
+                    e.printStackTrace();
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -129,7 +189,6 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
 
         Bundle bundle = new Bundle();
         bundle.putInt(NoteDBContract.NoteTable._ID,Integer.parseInt(tvID.getText().toString()));
-        //getListView().setBackgroundColor(R.color.transparent);
 
         openNoteFragment(noteFragType.SHOW,bundle);
     }

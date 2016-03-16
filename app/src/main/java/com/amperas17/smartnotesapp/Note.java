@@ -126,4 +126,15 @@ public class Note implements Parcelable,Cloneable {
         return (Note) super.clone();
     }
 
+    public String getHumanReadableString(){
+        String result;
+        result = "Title: " + mTitle + "\n" +
+                "Content: " + mContent + "\n" +
+                "Priority: " + NoteDBContract.NoteTable.PRIORITIES[mRank] + "\n" +
+                "Created: " + mCreated + "\n" +
+                "Latitude: " + mLatitude + "\n" +
+                "Longitude: " + mLongitude + "\n";
+        return result;
+    }
+
 }
