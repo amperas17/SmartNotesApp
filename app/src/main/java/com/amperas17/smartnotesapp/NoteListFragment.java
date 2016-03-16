@@ -3,10 +3,7 @@ package com.amperas17.smartnotesapp;
 
 import android.content.ContentUris;
 import android.database.Cursor;
-<<<<<<< HEAD
-=======
 import android.graphics.Color;
->>>>>>> fc6c0871737890c8f5dfe7def5a2168784ca4765
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;

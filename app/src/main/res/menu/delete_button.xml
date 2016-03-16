@@ -4,11 +4,7 @@
     <item
         android:id="@+id/btDeleteMenuItem"
         app:showAsAction="always"
-<<<<<<< HEAD
         android:title="delete"
-=======
-        android:title="add"
->>>>>>> fc6c0871737890c8f5dfe7def5a2168784ca4765
         android:icon="@drawable/ic_delete"
         >
     </item>

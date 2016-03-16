@@ -27,11 +27,8 @@ import com.squareup.picasso.Picasso;
  */
 public class NoteItemShowFragment extends Fragment implements LoaderManager.LoaderCallbacks{
     final static Integer LOADER_ID = 2;
-<<<<<<< HEAD
     final static Integer DELETED_NOTE_ID = -1;
 
-=======
->>>>>>> fc6c0871737890c8f5dfe7def5a2168784ca4765
     final String EDIT_NOTE_TRANSACTION_TAG = "editNote";
 
     final String LOG_TAG = "myLogs";
@@ -82,7 +79,7 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.btEditMenuItem:
-<<<<<<< HEAD
+
                 if (mNote.mId!=-1) {
                     Fragment fragment = new NoteItemEditFragment();
 
@@ -99,21 +96,7 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
                 } else {
                     Toast.makeText(getActivity(), "Note was deleted!", Toast.LENGTH_SHORT).show();
                 }
-                return true;
-=======
-                Fragment fragment = new NoteItemEditFragment();
-
-                Bundle bundle = new Bundle();
-                bundle.putParcelable(Note.NOTE,mNote);
-                fragment.setArguments(bundle);
-
-                getActivity().getSupportFragmentManager().beginTransaction()
-                        .addToBackStack(EDIT_NOTE_TRANSACTION_TAG)
-                        .setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left,
-                                R.anim.enter_from_left, R.anim.exit_to_right)
-                        .replace(R.id.fl_note_list_container, fragment)
-                        .commit();
->>>>>>> fc6c0871737890c8f5dfe7def5a2168784ca4765
+            return true;
 
             case R.id.btDeleteMenuItem:
                 if (mNote.mId!=-1) {
@@ -126,11 +109,6 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
                 }
                 return true;
 
-            case R.id.btDeleteMenuItem:
-                Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI, mNote.mId);
-                getActivity().getSupportLoaderManager().destroyLoader(LOADER_ID);
-                getActivity().getContentResolver().delete(uri, null, null);
-                getActivity().onBackPressed();
             default:
                 return super.onOptionsItemSelected(item);
         }
