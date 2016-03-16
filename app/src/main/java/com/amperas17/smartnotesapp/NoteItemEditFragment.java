@@ -2,6 +2,7 @@ package com.amperas17.smartnotesapp;
 
 import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -13,12 +14,15 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -32,13 +36,15 @@ public class NoteItemEditFragment extends Fragment {
     public  static final String INITIAL_NOTE_TAG = "initNote";
     public  static final String IS_EDITING_TAG = "isEditing";
 
-
+    RelativeLayout mRelativeLayout;
     EditText mEtTitle,mEtContent;
     Spinner mSpinner;
     ImageButton mIbImage;
 
     Boolean mIsNoteEditing;
     Note mNote,mInitialNote;
+
+    ArrayAdapter<String> spinnerAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -84,26 +90,54 @@ public class NoteItemEditFragment extends Fragment {
             }
         });
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(),
+        spinnerAdapter = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_spinner_item, NoteDBContract.NoteTable.PRIORITIES);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
         mSpinner = (Spinner) view.findViewById(R.id.spinner_note_edit_rank);
-        mSpinner.setAdapter(adapter);
+        mSpinner.setAdapter(spinnerAdapter
+        );
         mSpinner.setSelection(NoteDBContract.NoteTable.NO_PRIORITY);
         mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view,
                                        int position, long id) {
                 mNote.mRank = position;
-           }
+            }
+
             @Override
             public void onNothingSelected(AdapterView<?> arg0) {
             }
         });
+        mSpinner.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                removeEditTextFocus(mEtTitle);
+                return false;
+            }
+        });
+
+        mRelativeLayout = (RelativeLayout)view.findViewById(R.id.rl_note_edit);
+        mRelativeLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                removeEditTextFocus(mEtTitle);
+            }
+        });
 
         mIbImage = (ImageButton)view.findViewById(R.id.ib_note_edit_image);
-
+        mIbImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                removeEditTextFocus(mEtTitle);
+            }
+        });
+        mIbImage.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                return false;
+            }
+        });
 
         return view;
     }
@@ -155,7 +189,7 @@ public class NoteItemEditFragment extends Fragment {
     public void onSaveInstanceState(Bundle outState) {
         //Log.d(LOG_TAG,"onSaveInstanceState: "+mNote.toString()+" /---/ "+mInitialNote.toString());
         outState.putBoolean(INITIAL_NOTE_TAG, mIsNoteEditing);
-        outState.putParcelable(Note.NOTE_TAG,mNote);
+        outState.putParcelable(Note.NOTE_TAG, mNote);
         outState.putParcelable(INITIAL_NOTE_TAG, mInitialNote);
 
         super.onSaveInstanceState(outState);
@@ -222,5 +256,10 @@ public class NoteItemEditFragment extends Fragment {
         }
     }
 
+    public void removeEditTextFocus(EditText editText){
+        InputMethodManager imm = (InputMethodManager) getActivity()
+                .getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(editText.getWindowToken(), 0);
+    }
 
 }

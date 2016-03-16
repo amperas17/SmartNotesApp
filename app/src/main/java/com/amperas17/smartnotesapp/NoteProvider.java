@@ -156,7 +156,7 @@ public class NoteProvider extends ContentProvider {
                         new String[]{String.valueOf(_id)});
                 Log.d(LOG_TAG, "deleted " + rows + " Note ");
                 break;
-            
+
             default:
                 throw new UnsupportedOperationException("[provider:delete]Unknown uri: " + uri);
         }
