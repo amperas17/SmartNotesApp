@@ -211,7 +211,7 @@ public class NoteItemEditFragment extends Fragment {
                 cv.put(NoteDBContract.NoteTable.COLUMN_TITLE, mNote.mTitle);
                 cv.put(NoteDBContract.NoteTable.COLUMN_CONTENT, mNote.mContent);
                 cv.put(NoteDBContract.NoteTable.COLUMN_RANK, mNote.mRank);
-
+                cv.put(NoteDBContract.NoteTable.COLUMN_CREATED,System.currentTimeMillis());
                 if (mIsNoteEditing){
                     Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI,mNote.mId);
                     getActivity().getContentResolver().update(uri, cv, null, null);

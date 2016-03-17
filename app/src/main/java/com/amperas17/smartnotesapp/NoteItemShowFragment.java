@@ -22,8 +22,10 @@ import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
+import java.text.SimpleDateFormat;
+
 /**
- *
+ *  Show note data to user.
  */
 public class NoteItemShowFragment extends Fragment implements LoaderManager.LoaderCallbacks{
     final static Integer LOADER_ID = 2;
@@ -33,7 +35,7 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
 
     final String LOG_TAG = "myLogs";
 
-    TextView mTvTitle,mTvContent,mTvRank;
+    TextView mTvTitle,mTvContent,mTvRank,mTvCreated;
     ImageView mIvImage;
 
     Note mNote;
@@ -50,6 +52,7 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
         mTvTitle = (TextView)view.findViewById(R.id.tv_note_show_title);
         mTvContent = (TextView)view.findViewById(R.id.tv_note_show_content);
         mTvRank = (TextView)view.findViewById(R.id.tv_note_show_rank);
+        mTvCreated = (TextView)view.findViewById(R.id.tv_note_show_created);
 
         mIvImage = (ImageView)view.findViewById(R.id.iv_note_show_image);
 
@@ -139,6 +142,9 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
         mTvContent.setText(mNote.mContent);
 
         mTvRank.setText(NoteDBContract.NoteTable.PRIORITIES[mNote.mRank]);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss dd.MM.yy");
+        mTvCreated.setText(sdf.format(mNote.mCreated));
 
         String imagePath = mNote.mImagePath;
         if (imagePath != null) {

@@ -22,21 +22,12 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.google.gson.Gson;
-
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 
 import ru.bartwell.exfilepicker.ExFilePicker;
 import ru.bartwell.exfilepicker.ExFilePickerParcelObject;
 
 /**
- *
+ * Show list of notes, provides interaction with note items.
  */
 public class NoteListFragment extends ListFragment implements LoaderManager.LoaderCallbacks{
 
@@ -54,7 +45,7 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     public static final int CONTEXT_ACTION_EDIT = 1;
     public static final int CONTEXT_ACTION_SAVE_FILE = 2;
 
-    private static final int SINGLE_DIRECTOTY_PICKER_RESULT = 0;
+    private static final int SINGLE_DIRECTORY_PICKER_RESULT = 0;
 
 
 
@@ -70,7 +61,7 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
 
         mSavingNote = new Note();
 
-        Log.d(LOG_TAG, "NoteFrag:onCreateView");
+        //Log.d(LOG_TAG, "NoteFrag:onCreateView");
         return view;
     }
 
@@ -121,42 +112,40 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
                 break;
 
             case CONTEXT_ACTION_SAVE_FILE:
-                //saveFile("file.txt",note);
-                //FileSaver.storeTextFile(getActivity(),note);
                 try {
                     mSavingNote = note.clone();
                 } catch (CloneNotSupportedException e) {
                     e.printStackTrace();
                 }
-                openFileDialog();
+                chooseDirectoryInFileDialog();
                 break;
             default:
                 break;
         }
-        //Log.d(LOG_TAG, "ContextListMenu: Tag = " + ((TextView)info.targetView.findViewById(R.id.tv_list_item_note_id)).getTag().toString());
+        //Log.d(LOG_TAG, "ContextListMenu: Tag = " + note);
         return true;
     }
 
-    private void openFileDialog() {
+    private void chooseDirectoryInFileDialog() {
        Intent intent = new Intent(getActivity().getApplicationContext(),
                ru.bartwell.exfilepicker.ExFilePickerActivity.class);
        intent.putExtra(ExFilePicker.SET_ONLY_ONE_ITEM, true);
        intent.putExtra(ExFilePicker.SET_CHOICE_TYPE, ExFilePicker.CHOICE_TYPE_DIRECTORIES);
-       startActivityForResult(intent, SINGLE_DIRECTOTY_PICKER_RESULT);
+       startActivityForResult(intent, SINGLE_DIRECTORY_PICKER_RESULT);
     }
 
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == SINGLE_DIRECTOTY_PICKER_RESULT) {
+        if (requestCode == SINGLE_DIRECTORY_PICKER_RESULT) {
             if (data != null) {
                 ExFilePickerParcelObject object = data
                         .getParcelableExtra(ExFilePickerParcelObject.class.getCanonicalName());
                 try {
                     String directoryPath = object.path + object.names.get(0);
                     String filePath = directoryPath +'/' + mSavingNote.mTitle;
-                    
+
                     FileSaver fileSaver = new FileSaver(getActivity());
-                    fileSaver.saveFile(filePath, mSavingNote, FileSaver.fileType.TXT_FILE);
+                    fileSaver.saveNoteFile(filePath, mSavingNote, FileSaver.fileType.TXT_FILE);
                 } catch (IndexOutOfBoundsException e){
                     e.printStackTrace();
                 } catch (Exception e){
@@ -186,6 +175,7 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         TextView tvID = (TextView)v.findViewById(R.id.tv_list_item_note_id);
+        Log.d(LOG_TAG,"onListItemClick"+tvID.getTag().toString());
 
         Bundle bundle = new Bundle();
         bundle.putInt(NoteDBContract.NoteTable._ID,Integer.parseInt(tvID.getText().toString()));

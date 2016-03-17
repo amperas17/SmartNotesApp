@@ -3,19 +3,21 @@ package com.amperas17.smartnotesapp;
 import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
+
+import java.text.SimpleDateFormat;
 
 /**
- * Created by Вова on 15.03.2016.
+ * Provides work with Note objects.
  */
 public class Note implements Parcelable,Cloneable {
     public  static final String NOTE_TAG = "note";
+    private SimpleDateFormat mDateFormat = new SimpleDateFormat("dd.MM.yy HH:mm:ss");
 
     public Integer mId;
-    protected String mTitle;
+    public String mTitle;
     public String mContent;
     public Integer mRank;
-    public Integer mCreated;
+    public Double mCreated;
     public String mImagePath;
     public Double mLatitude;
     public Double mLongitude;
@@ -30,7 +32,7 @@ public class Note implements Parcelable,Cloneable {
         mLatitude = null;
         mLongitude = null;
     }
-    public Note(int id,String title,String content,int rank,int created,
+    public Note(int id,String title,String content,int rank,double created,
                 String imagePath,double latitude,double longitude){
         mId = id;
         mTitle = title;
@@ -47,7 +49,7 @@ public class Note implements Parcelable,Cloneable {
         mTitle = in.readString();
         mContent = in.readString();
         mRank = in.readInt();
-        mCreated = in.readInt();
+        mCreated = in.readDouble();
         mImagePath = in.readString();
         mLatitude = in.readDouble();
         mLongitude = in.readDouble();
@@ -62,7 +64,7 @@ public class Note implements Parcelable,Cloneable {
                 .getColumnIndex(NoteDBContract.NoteTable.COLUMN_CONTENT));
         mRank = cursor.getInt(cursor
                 .getColumnIndex(NoteDBContract.NoteTable.COLUMN_RANK));
-        mCreated = cursor.getInt(cursor
+        mCreated = cursor.getDouble(cursor
                 .getColumnIndex(NoteDBContract.NoteTable.COLUMN_CREATED));
         mImagePath = cursor.getString(cursor
                 .getColumnIndex(NoteDBContract.NoteTable.COLUMN_IMAGE_PATH));
@@ -83,7 +85,7 @@ public class Note implements Parcelable,Cloneable {
         dest.writeString(mTitle);
         dest.writeString(mContent);
         dest.writeInt(mRank);
-        dest.writeInt(mCreated);
+        dest.writeDouble(mCreated);
         dest.writeString(mImagePath);
         dest.writeDouble(mLatitude);
         dest.writeDouble(mLongitude);
@@ -105,7 +107,7 @@ public class Note implements Parcelable,Cloneable {
     @Override
     public String toString() {
         return mId+" "+mTitle+" "+mContent+" "+mRank+" "+
-                mCreated+" "+mImagePath+" "+mLatitude+" "+mLongitude;
+                mDateFormat.format(mCreated)+" "+mImagePath+" "+mLatitude+" "+mLongitude;
     }
 
     @Override
@@ -126,12 +128,13 @@ public class Note implements Parcelable,Cloneable {
         return (Note) super.clone();
     }
 
-    public String getHumanReadableString(){
+    public String toHumanReadableString(){
+
         String result;
         result = "Title: " + mTitle + "\n" +
                 "Content: " + mContent + "\n" +
                 "Priority: " + NoteDBContract.NoteTable.PRIORITIES[mRank] + "\n" +
-                "Created: " + mCreated + "\n" +
+                "Created: " + mDateFormat.format(mCreated) + "\n" +
                 "Latitude: " + mLatitude + "\n" +
                 "Longitude: " + mLongitude + "\n";
         return result;

@@ -23,7 +23,7 @@ public class NoteProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
-        Log.d(LOG_TAG, "provider:onCreate");
+        //Log.d(LOG_TAG, "provider:onCreate");
         mOpenHelper = new NoteDBHelper(getContext());
         return true;
     }
@@ -53,7 +53,7 @@ public class NoteProvider extends ContentProvider {
                         selectionArgs,
                         null,
                         null,
-                        sortOrder
+                        NoteDBContract.NoteTable.COLUMN_CREATED + " DESC"
                 );
                 break;
             case NOTE_ID:
@@ -83,7 +83,7 @@ public class NoteProvider extends ContentProvider {
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         long _id;
         Uri returnUri;
-        Log.d(LOG_TAG,"[provider:insert]");
+        //Log.d(LOG_TAG,"[provider:insert]");
 
         switch(sUriMatcher.match(uri)){
             case NOTE:
