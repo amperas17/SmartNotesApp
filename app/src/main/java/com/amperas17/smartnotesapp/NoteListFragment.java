@@ -159,16 +159,11 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        mListView = getListView();
         getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
 
-        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                return false;
-            }
-        });
+        mListView = getListView();
         registerForContextMenu(mListView);
+
         super.onActivityCreated(savedInstanceState);
     }
 

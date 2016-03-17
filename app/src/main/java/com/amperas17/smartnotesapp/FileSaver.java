@@ -13,9 +13,9 @@ import java.io.OutputStreamWriter;
  */
 public final class FileSaver {
 
-    public enum fileType{TXT_FILE,JSON_FILE}
+    protected enum fileType{TXT_FILE,JSON_FILE}
 
-    Context mContext;
+    private Context mContext;
 
     public FileSaver(Context context){
         mContext = context;

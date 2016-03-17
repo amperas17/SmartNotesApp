@@ -2,7 +2,6 @@ package com.amperas17.smartnotesapp;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,15 +9,10 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
-
-import java.io.File;
-
 /**
- * Created by Вова on 12.03.2016.
+ * Adapter for Note list items
  */
 public class NoteAdapter extends CursorAdapter{
-    Picasso mPicasso;
     public NoteAdapter(Context context, Cursor cursor, int flags) {
         super(context, cursor, 0);
     }
@@ -55,39 +49,32 @@ public class NoteAdapter extends CursorAdapter{
             holder.tvId.setText(note.mId.toString());
             holder.tvId.setTag(note);
 
-            if (note.mImagePath != null){
-                File file = new File(note.mImagePath);
-
-                mPicasso.with(context)
-                        .load(file)
-                        .resizeDimen(R.dimen.list_item_image_size, R.dimen.list_item_image_size)
-                        .placeholder(R.drawable.ic_simple_note)
-                        .error(R.drawable.ic_simple_note)
-                        .centerInside()
-                        .into(holder.ivImage);
-            } else {
-                holder.ivImage.setImageResource(R.drawable.ic_simple_note);
-            }
+            ImageDownloader downloader = new ImageDownloader(context);
+            downloader.setImage(note.mImagePath,holder.ivImage, ImageDownloader.imageSize.SMALL_ICON);
 
             holder.tvTitle.setText(note.mTitle);
 
-            switch (note.mRank){
-                case NoteDBContract.NoteTable.NO_PRIORITY:
-                    holder.ivPriority.setImageResource(R.drawable.ic_white_pin);
-                    break;
-                case NoteDBContract.NoteTable.LOW_PRIORITY:
-                    holder.ivPriority.setImageResource(R.drawable.ic_green_pin);
-                    break;
-                case NoteDBContract.NoteTable.MEDIUM_PRIORITY:
-                    holder.ivPriority.setImageResource(R.drawable.ic_yellow_pin);
-                    break;
-                case NoteDBContract.NoteTable.HIGH_PRIORITY:
-                    holder.ivPriority.setImageResource(R.drawable.ic_red_pin);
-                    break;
-                default:
-                    holder.ivPriority.setImageResource(R.drawable.ic_white_pin);
-            }
+            setIcon(note.mRank,holder.ivPriority);
 
+        }
+    }
+
+    private void setIcon(int rank,ImageView imageView){
+        switch (rank){
+            case NoteDBContract.NoteTable.NO_PRIORITY:
+                imageView.setImageResource(R.drawable.ic_white_pin);
+                break;
+            case NoteDBContract.NoteTable.LOW_PRIORITY:
+                imageView.setImageResource(R.drawable.ic_green_pin);
+                break;
+            case NoteDBContract.NoteTable.MEDIUM_PRIORITY:
+                imageView.setImageResource(R.drawable.ic_yellow_pin);
+                break;
+            case NoteDBContract.NoteTable.HIGH_PRIORITY:
+                imageView.setImageResource(R.drawable.ic_red_pin);
+                break;
+            default:
+                imageView.setImageResource(R.drawable.ic_white_pin);
         }
     }
 

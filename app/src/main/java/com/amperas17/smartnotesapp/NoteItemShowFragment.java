@@ -19,9 +19,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.squareup.picasso.Picasso;
-
 import java.text.SimpleDateFormat;
 
 /**
@@ -39,8 +36,6 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
     ImageView mIvImage;
 
     Note mNote;
-    String mImagePath;
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -146,18 +141,9 @@ public class NoteItemShowFragment extends Fragment implements LoaderManager.Load
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss dd.MM.yy");
         mTvCreated.setText(sdf.format(mNote.mCreated));
 
-        String imagePath = mNote.mImagePath;
-        if (imagePath != null) {
-            mImagePath = imagePath;
-            Picasso.with(getActivity())
-                   .load(imagePath)
-                   .placeholder(R.drawable.ic_simple_note)
-                   .error(R.drawable.ic_simple_note)
-                   .centerInside()
-                   .into(mIvImage);
-        } else {
-            mIvImage.setImageResource(R.drawable.ic_simple_note);
-        }
+        ImageDownloader downloader = new ImageDownloader(getActivity());
+        downloader.setImage(mNote.mImagePath,mIvImage, ImageDownloader.imageSize.FULL);
+
     }
 
     @Override

@@ -3,13 +3,13 @@ package com.amperas17.smartnotesapp;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,17 +24,19 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
-import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
+import ru.bartwell.exfilepicker.ExFilePicker;
+import ru.bartwell.exfilepicker.ExFilePickerParcelObject;
 
 /**
- *
+ * Provides note editing functions
  */
 public class NoteItemEditFragment extends Fragment {
     final String LOG_TAG = "myLogs";
     public  static final String INITIAL_NOTE_TAG = "initNote";
     public  static final String IS_EDITING_TAG = "isEditing";
+    private static final int SINGLE_IMAGE_PICKER_RESULT = 0;
+
 
     RelativeLayout mRelativeLayout;
     EditText mEtTitle,mEtContent;
@@ -46,6 +48,8 @@ public class NoteItemEditFragment extends Fragment {
 
     ArrayAdapter<String> spinnerAdapter;
 
+    ImageDownloader mDownloader;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -54,6 +58,8 @@ public class NoteItemEditFragment extends Fragment {
 
         mNote = new Note();
         mInitialNote = new Note();
+
+        mDownloader = new ImageDownloader(getActivity());
 
         mEtTitle = (EditText)view.findViewById(R.id.et_note_edit_title);
         mEtTitle.addTextChangedListener(new TextWatcher() {
@@ -135,11 +141,44 @@ public class NoteItemEditFragment extends Fragment {
         mIbImage.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+                chooseImageInFileDialog();
                 return false;
             }
         });
 
         return view;
+    }
+
+    private void chooseImageInFileDialog() {
+        Intent intent = new Intent(getActivity().getApplicationContext(),
+                ru.bartwell.exfilepicker.ExFilePickerActivity.class);
+        intent.putExtra(ExFilePicker.SET_ONLY_ONE_ITEM, true);
+        intent.putExtra(ExFilePicker.SET_CHOICE_TYPE, ExFilePicker.CHOICE_TYPE_FILES);
+        intent.putExtra(ExFilePicker.SET_FILTER_LISTED, new String[] {"jpg","jpeg","png"});
+        startActivityForResult(intent, SINGLE_IMAGE_PICKER_RESULT);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SINGLE_IMAGE_PICKER_RESULT) {
+            if (data != null) {
+                ExFilePickerParcelObject object = data
+                        .getParcelableExtra(ExFilePickerParcelObject.class.getCanonicalName());
+                try {
+                    String filePath = object.path + object.names.get(0);
+                    Log.d(LOG_TAG, "file " + filePath);
+
+                    mNote.mImagePath = filePath;
+
+                    mDownloader.setImage(mNote.mImagePath, mIbImage, ImageDownloader.imageSize.FULL);
+
+                } catch (IndexOutOfBoundsException e){
+                    e.printStackTrace();
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     @Override
@@ -171,16 +210,7 @@ public class NoteItemEditFragment extends Fragment {
         mEtContent.setText(mNote.mContent);
         mSpinner.setSelection(mNote.mRank);
 
-        if (mNote.mImagePath != null) {
-            Picasso.with(getActivity())
-                    .load(mNote.mImagePath)
-                    .placeholder(R.drawable.ic_simple_note)
-                    .error(R.drawable.ic_simple_note)
-                    .centerInside()
-                    .into(mIbImage);
-        } else {
-            mIbImage.setImageResource(R.drawable.ic_simple_note);
-        }
+        mDownloader.setImage(mNote.mImagePath, mIbImage, ImageDownloader.imageSize.FULL);
 
         super.onActivityCreated(savedInstanceState);
     }
@@ -211,6 +241,7 @@ public class NoteItemEditFragment extends Fragment {
                 cv.put(NoteDBContract.NoteTable.COLUMN_TITLE, mNote.mTitle);
                 cv.put(NoteDBContract.NoteTable.COLUMN_CONTENT, mNote.mContent);
                 cv.put(NoteDBContract.NoteTable.COLUMN_RANK, mNote.mRank);
+                cv.put(NoteDBContract.NoteTable.COLUMN_IMAGE_PATH,mNote.mImagePath);
                 cv.put(NoteDBContract.NoteTable.COLUMN_CREATED,System.currentTimeMillis());
                 if (mIsNoteEditing){
                     Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI,mNote.mId);
@@ -226,7 +257,7 @@ public class NoteItemEditFragment extends Fragment {
                     Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI, mNote.mId);
                     getActivity().getContentResolver().delete(uri, null, null);
 
-                    //I think it is a crutch or hardcode, but it work properly
+                    //I think it is a crutch or hardcode, but it work properly(go back to listFragment)
                     while (getActivity().getSupportFragmentManager().getBackStackEntryCount() > 0) {
                         getActivity().getSupportFragmentManager().popBackStackImmediate();
                     }
@@ -243,6 +274,8 @@ public class NoteItemEditFragment extends Fragment {
                     mEtTitle.setText(mInitialNote.mTitle);
                     mEtContent.setText(mInitialNote.mContent);
                     mSpinner.setSelection(mInitialNote.mRank);
+                    mDownloader.setImage(mInitialNote.mImagePath, mIbImage, ImageDownloader.imageSize.FULL);
+
                     try {
                         mNote = mInitialNote.clone();
                     } catch (CloneNotSupportedException e) {

@@ -17,22 +17,22 @@ public class Note implements Parcelable,Cloneable {
     public String mTitle;
     public String mContent;
     public Integer mRank;
-    public Double mCreated;
+    public Long mCreated;
     public String mImagePath;
     public Double mLatitude;
     public Double mLongitude;
 
     public Note(){
-        mId = null;
+        mId = 0;
         mTitle = "";
         mContent = "";
         mRank = 0;
-        mCreated = null;
-        mImagePath = null;
-        mLatitude = null;
-        mLongitude = null;
+        mCreated = 0l;
+        mImagePath = "";
+        mLatitude = 0.0;
+        mLongitude = 0.0;
     }
-    public Note(int id,String title,String content,int rank,double created,
+    public Note(int id,String title,String content,int rank,long created,
                 String imagePath,double latitude,double longitude){
         mId = id;
         mTitle = title;
@@ -49,7 +49,7 @@ public class Note implements Parcelable,Cloneable {
         mTitle = in.readString();
         mContent = in.readString();
         mRank = in.readInt();
-        mCreated = in.readDouble();
+        mCreated = in.readLong();
         mImagePath = in.readString();
         mLatitude = in.readDouble();
         mLongitude = in.readDouble();
@@ -64,7 +64,7 @@ public class Note implements Parcelable,Cloneable {
                 .getColumnIndex(NoteDBContract.NoteTable.COLUMN_CONTENT));
         mRank = cursor.getInt(cursor
                 .getColumnIndex(NoteDBContract.NoteTable.COLUMN_RANK));
-        mCreated = cursor.getDouble(cursor
+        mCreated = cursor.getLong(cursor
                 .getColumnIndex(NoteDBContract.NoteTable.COLUMN_CREATED));
         mImagePath = cursor.getString(cursor
                 .getColumnIndex(NoteDBContract.NoteTable.COLUMN_IMAGE_PATH));
