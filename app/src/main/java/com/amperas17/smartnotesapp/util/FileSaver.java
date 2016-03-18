@@ -1,7 +1,7 @@
-package com.amperas17.smartnotesapp;
+package com.amperas17.smartnotesapp.util;
 
 import android.content.Context;
-import android.widget.Toast;
+import com.amperas17.smartnotesapp.dao.Note;
 import com.google.gson.Gson;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -13,7 +13,10 @@ import java.io.OutputStreamWriter;
  */
 public final class FileSaver {
 
-    protected enum fileType{TXT_FILE,JSON_FILE}
+    public enum fileType{TXT_FILE,JSON_FILE}
+
+    public static int SUCCESS_RESULT_CODE = 0;
+    public static int ERROR_RESULT_CODE = -1;
 
     private Context mContext;
 
@@ -21,7 +24,7 @@ public final class FileSaver {
         mContext = context;
     }
 
-    public void saveNoteFile(String filePath, Note note, fileType type) {
+    public int saveNoteFile(String filePath, Note note, fileType type) {
         String result = "";
         switch (type){
             case TXT_FILE:
@@ -42,14 +45,14 @@ public final class FileSaver {
 
             writer.write(result);
             writer.close();
-            //Log.d(NoteDBContract.LOG_TAG, "" + result);
-            Toast.makeText(mContext, "File was saved successfully", Toast.LENGTH_LONG);
+            return SUCCESS_RESULT_CODE;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            Toast.makeText(mContext, "File did not found", Toast.LENGTH_LONG);
+            return ERROR_RESULT_CODE;
+
         } catch (IOException e) {
-            Toast.makeText(mContext, "Error! File was not saved.", Toast.LENGTH_LONG);
             e.printStackTrace();
+            return ERROR_RESULT_CODE;
         }
     }
 

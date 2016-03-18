@@ -1,7 +1,9 @@
-package com.amperas17.smartnotesapp;
+package com.amperas17.smartnotesapp.util;
 
 import android.content.Context;
 import android.widget.ImageView;
+
+import com.amperas17.smartnotesapp.R;
 import com.squareup.picasso.Picasso;
 import java.io.File;
 
@@ -9,7 +11,7 @@ import java.io.File;
  * Set images to ImageView using Picasso
  */
 public class ImageDownloader {
-    protected enum imageSize{SMALL_ICON,FULL}
+    public enum imageSize{SMALL_ICON,FULL}
     private Context mContext;
 
     public ImageDownloader(Context context){

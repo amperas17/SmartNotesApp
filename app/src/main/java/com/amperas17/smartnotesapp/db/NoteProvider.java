@@ -1,4 +1,4 @@
-package com.amperas17.smartnotesapp;
+package com.amperas17.smartnotesapp.db;
 
 import android.content.ContentProvider;
 import android.content.ContentUris;
@@ -9,12 +9,13 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.Log;
 
+import com.amperas17.smartnotesapp.db.NoteDBContract;
+import com.amperas17.smartnotesapp.db.NoteDBHelper;
+
 public class NoteProvider extends ContentProvider {
 
     private static final int NOTE = 100;
     private static final int NOTE_ID = 101;
-
-    final String LOG_TAG = "myLogs";
 
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     private NoteDBHelper mOpenHelper;
@@ -23,7 +24,6 @@ public class NoteProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
-        //Log.d(LOG_TAG, "provider:onCreate");
         mOpenHelper = new NoteDBHelper(getContext());
         return true;
     }
@@ -47,21 +47,21 @@ public class NoteProvider extends ContentProvider {
         switch(sUriMatcher.match(uri)) {
             case NOTE:
                 cursor = db.query(
-                        NoteDBContract.NoteTable.TABLE_NAME,
+                        NoteTableContract.TABLE_NAME,
                         projection,
                         selection,
                         selectionArgs,
                         null,
                         null,
-                        NoteDBContract.NoteTable.COLUMN_CREATED + " DESC"
+                        NoteTableContract.COLUMN_CREATED + " DESC"
                 );
                 break;
             case NOTE_ID:
                 long _id = ContentUris.parseId(uri);
                 cursor = db.query(
-                        NoteDBContract.NoteTable.TABLE_NAME,
+                        NoteTableContract.TABLE_NAME,
                         projection,
-                        NoteDBContract.NoteTable._ID + " = ?",
+                        NoteTableContract._ID + " = ?",
                         new String[]{String.valueOf(_id)},
                         null,
                         null,
@@ -83,16 +83,14 @@ public class NoteProvider extends ContentProvider {
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         long _id;
         Uri returnUri;
-        //Log.d(LOG_TAG,"[provider:insert]");
 
         switch(sUriMatcher.match(uri)){
             case NOTE:
 
-            _id = db.insert(NoteDBContract.NoteTable.TABLE_NAME, null, values);
-            Log.d(LOG_TAG,"Insert - id= "+_id);
+            _id = db.insert(NoteTableContract.TABLE_NAME, null, values);
 
             if(_id > 0){
-                returnUri =  NoteDBContract.NoteTable.buildCategoryUri(_id);
+                returnUri =  NoteTableContract.buildCategoryUri(_id);
             } else{
                 throw new UnsupportedOperationException("[provider:insert]Unable to insert rows into: " + uri);
             }
@@ -116,16 +114,16 @@ public class NoteProvider extends ContentProvider {
 
         switch(sUriMatcher.match(uri)){
             case NOTE:
-                rows = db.update(NoteDBContract.NoteTable.TABLE_NAME,
+                rows = db.update(NoteTableContract.TABLE_NAME,
                         values,
                         selection,
                         selectionArgs);
                 break;
             case NOTE_ID:
                 long _id = ContentUris.parseId(uri);
-                rows = db.update(NoteDBContract.NoteTable.TABLE_NAME,
+                rows = db.update(NoteTableContract.TABLE_NAME,
                         values,
-                        NoteDBContract.NoteTable._ID + " = ?",
+                        NoteTableContract._ID + " = ?",
                         new String[]{String.valueOf(_id)});
                 break;
             default:
@@ -146,15 +144,13 @@ public class NoteProvider extends ContentProvider {
 
         switch(sUriMatcher.match(uri)) {
             case NOTE:
-                rows = db.delete(NoteDBContract.NoteTable.TABLE_NAME, selection, selectionArgs);
-                Log.d(LOG_TAG, "deleted " + rows + " Note ");
+                rows = db.delete(NoteTableContract.TABLE_NAME, selection, selectionArgs);
                 break;
             case NOTE_ID:
                 long _id = ContentUris.parseId(uri);
-                rows = db.delete(NoteDBContract.NoteTable.TABLE_NAME,
-                        NoteDBContract.NoteTable._ID + " = ?",
+                rows = db.delete(NoteTableContract.TABLE_NAME,
+                        NoteTableContract._ID + " = ?",
                         new String[]{String.valueOf(_id)});
-                Log.d(LOG_TAG, "deleted " + rows + " Note ");
                 break;
 
             default:
@@ -173,9 +169,9 @@ public class NoteProvider extends ContentProvider {
     public String getType(Uri uri) {
         switch(sUriMatcher.match(uri)){
             case NOTE:
-                return NoteDBContract.NoteTable.CONTENT_TYPE;
+                return NoteTableContract.CONTENT_TYPE;
             case NOTE_ID:
-                return NoteDBContract.NoteTable.CONTENT_ITEM_TYPE;
+                return NoteTableContract.CONTENT_ITEM_TYPE;
 
             default:
                 throw new UnsupportedOperationException("[provider:getType]Unknown uri: " + uri);

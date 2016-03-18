@@ -1,17 +1,16 @@
-package com.amperas17.smartnotesapp;
-
+package com.amperas17.smartnotesapp.fragment;
 
 import android.content.ContentUris;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -22,6 +21,16 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.amperas17.smartnotesapp.dao.Note;
+import com.amperas17.smartnotesapp.db.NoteDBContract;
+import com.amperas17.smartnotesapp.R;
+import com.amperas17.smartnotesapp.adapter.NoteAdapter;
+import com.amperas17.smartnotesapp.db.NoteTableContract;
+import com.amperas17.smartnotesapp.service.SaveFileService;
+import com.amperas17.smartnotesapp.util.FileSaver;
+import com.amperas17.smartnotesapp.receiver.SaveFileResultReceiver;
 
 import ru.bartwell.exfilepicker.ExFilePicker;
 import ru.bartwell.exfilepicker.ExFilePickerParcelObject;
@@ -29,10 +38,11 @@ import ru.bartwell.exfilepicker.ExFilePickerParcelObject;
 /**
  * Show list of notes, provides interaction with note items.
  */
-public class NoteListFragment extends ListFragment implements LoaderManager.LoaderCallbacks{
 
-    final static Integer LOADER_ID = 1;
-    final String LOG_TAG = "myLogs";
+public class NoteListFragment extends ListFragment
+        implements LoaderManager.LoaderCallbacks,SaveFileResultReceiver.Receiver{
+
+    public static final Integer LOADER_ID = 1;
 
     public enum noteFragType{SHOW,EDIT}
 
@@ -48,10 +58,10 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     private static final int SINGLE_DIRECTORY_PICKER_RESULT = 0;
 
 
-
     NoteAdapter mNoteAdapter;
     ListView mListView;
     Note mSavingNote;
+    SaveFileResultReceiver mReceiver;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -61,14 +71,13 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
 
         mSavingNote = new Note();
 
-        //Log.d(LOG_TAG, "NoteFrag:onCreateView");
         return view;
     }
 
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.add_button, menu);
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -95,35 +104,45 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
+        AdapterView.AdapterContextMenuInfo info =
+                (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
         int menuItemIndex = item.getItemId();
         Note note = (Note)info.targetView.findViewById(R.id.tv_list_item_note_id).getTag();
 
         switch (menuItemIndex){
             case CONTEXT_ACTION_DELETE:
-                Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI, note.mId);
-                getActivity().getContentResolver().delete(uri,null,null);
+                deleteNote(note.mId);
                 break;
-
             case CONTEXT_ACTION_EDIT:
-                Bundle bundle = new Bundle();
-                bundle.putParcelable(Note.NOTE_TAG,note);
-                openNoteFragment(noteFragType.EDIT,bundle);
+                editNote(note);
                 break;
-
             case CONTEXT_ACTION_SAVE_FILE:
-                try {
-                    mSavingNote = note.clone();
-                } catch (CloneNotSupportedException e) {
-                    e.printStackTrace();
-                }
-                chooseDirectoryInFileDialog();
+                saveNoteFile(note);
                 break;
             default:
                 break;
         }
-        //Log.d(LOG_TAG, "ContextListMenu: Tag = " + note);
         return true;
+    }
+
+    private void deleteNote(int noteId){
+        Uri uri = ContentUris.withAppendedId(NoteDBContract.NOTE_TABLE_URI, noteId);
+        getActivity().getContentResolver().delete(uri,null,null);
+    }
+
+    private void editNote(Note note){
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(Note.NOTE_TAG,note);
+        openNoteFragment(noteFragType.EDIT, bundle);
+    }
+
+    private void saveNoteFile(Note note){
+        try {
+            mSavingNote = note.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        chooseDirectoryInFileDialog();
     }
 
     private void chooseDirectoryInFileDialog() {
@@ -134,8 +153,8 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
        startActivityForResult(intent, SINGLE_DIRECTORY_PICKER_RESULT);
     }
 
-
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
         if (requestCode == SINGLE_DIRECTORY_PICKER_RESULT) {
             if (data != null) {
                 ExFilePickerParcelObject object = data
@@ -143,9 +162,10 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
                 try {
                     String directoryPath = object.path + object.names.get(0);
                     String filePath = directoryPath +'/' + mSavingNote.mTitle;
+                    Toast.makeText(getActivity(), "Note file was saved.", Toast.LENGTH_LONG);
 
-                    FileSaver fileSaver = new FileSaver(getActivity());
-                    fileSaver.saveNoteFile(filePath, mSavingNote, FileSaver.fileType.TXT_FILE);
+                    saveTextFile(filePath);
+
                 } catch (IndexOutOfBoundsException e){
                     e.printStackTrace();
                 } catch (Exception e){
@@ -155,25 +175,42 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
         }
     }
 
+    private void saveTextFile(String filePath){
+        mReceiver = new SaveFileResultReceiver(new Handler());
+        mReceiver.setReceiver(this);
 
+        Intent saveFileIntent = new Intent(getActivity(), SaveFileService.class);
+        saveFileIntent.putExtra(SaveFileResultReceiver.TAG, mReceiver);
+        saveFileIntent.putExtra(SaveFileService.FILE_PATH_TAG, filePath);
+        saveFileIntent.putExtra(Note.NOTE_TAG, mSavingNote);
+        saveFileIntent.putExtra(SaveFileService.FILE_TYPE_TAG, FileSaver.fileType.TXT_FILE);
+
+        getActivity().startService(saveFileIntent);
+    }
+
+    @Override
+    public void onReceiveResult(int resultCode, Bundle resultData) {
+        if (resultCode==FileSaver.SUCCESS_RESULT_CODE){
+            Toast.makeText(getActivity(), "File was saved.", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getActivity(), "Error! File was not saved.", Toast.LENGTH_LONG).show();
+        }
+    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
-
         mListView = getListView();
         registerForContextMenu(mListView);
-
         super.onActivityCreated(savedInstanceState);
     }
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         TextView tvID = (TextView)v.findViewById(R.id.tv_list_item_note_id);
-        Log.d(LOG_TAG,"onListItemClick"+tvID.getTag().toString());
 
         Bundle bundle = new Bundle();
-        bundle.putInt(NoteDBContract.NoteTable._ID,Integer.parseInt(tvID.getText().toString()));
+        bundle.putInt(NoteTableContract._ID,Integer.parseInt(tvID.getText().toString()));
 
         openNoteFragment(noteFragType.SHOW,bundle);
     }
@@ -211,14 +248,14 @@ public class NoteListFragment extends ListFragment implements LoaderManager.Load
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
         CursorLoader cursorLoader = new CursorLoader(getActivity(),
-                NoteDBContract.NoteTable.TABLE_URI, null,
+                NoteDBContract.NOTE_TABLE_URI, null,
                 null, null, null);
         return cursorLoader;
     }
 
     @Override
     public void onLoadFinished(Loader loader, Object data) {
-        mNoteAdapter = new NoteAdapter(getActivity(),(Cursor) data,0);
+        mNoteAdapter = new NoteAdapter(getActivity(),(Cursor) data);
         mListView.setAdapter(mNoteAdapter);
     }
 

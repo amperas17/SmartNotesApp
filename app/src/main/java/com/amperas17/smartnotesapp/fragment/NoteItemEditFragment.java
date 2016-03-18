@@ -1,4 +1,4 @@
-package com.amperas17.smartnotesapp;
+package com.amperas17.smartnotesapp.fragment;
 
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -8,8 +8,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,19 +24,24 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.Toast;
+
+import com.amperas17.smartnotesapp.dao.Note;
+import com.amperas17.smartnotesapp.db.NoteDBContract;
+import com.amperas17.smartnotesapp.R;
+import com.amperas17.smartnotesapp.db.NoteTableContract;
+import com.amperas17.smartnotesapp.util.ImageDownloader;
 
 import ru.bartwell.exfilepicker.ExFilePicker;
 import ru.bartwell.exfilepicker.ExFilePickerParcelObject;
 
 /**
- * Provides note editing functions
+ * Provides note editing functions for single note.
  */
 public class NoteItemEditFragment extends Fragment {
-    final String LOG_TAG = "myLogs";
     public  static final String INITIAL_NOTE_TAG = "initNote";
     public  static final String IS_EDITING_TAG = "isEditing";
     private static final int SINGLE_IMAGE_PICKER_RESULT = 0;
-
 
     RelativeLayout mRelativeLayout;
     EditText mEtTitle,mEtContent;
@@ -97,13 +102,13 @@ public class NoteItemEditFragment extends Fragment {
         });
 
         spinnerAdapter = new ArrayAdapter<>(getActivity(),
-                android.R.layout.simple_spinner_item, NoteDBContract.NoteTable.PRIORITIES);
+                android.R.layout.simple_spinner_item, NoteTableContract.PRIORITIES);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
         mSpinner = (Spinner) view.findViewById(R.id.spinner_note_edit_rank);
         mSpinner.setAdapter(spinnerAdapter
         );
-        mSpinner.setSelection(NoteDBContract.NoteTable.NO_PRIORITY);
+        mSpinner.setSelection(NoteTableContract.NO_PRIORITY);
         mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view,
@@ -166,8 +171,6 @@ public class NoteItemEditFragment extends Fragment {
                         .getParcelableExtra(ExFilePickerParcelObject.class.getCanonicalName());
                 try {
                     String filePath = object.path + object.names.get(0);
-                    Log.d(LOG_TAG, "file " + filePath);
-
                     mNote.mImagePath = filePath;
 
                     mDownloader.setImage(mNote.mImagePath, mIbImage, ImageDownloader.imageSize.FULL);
@@ -188,7 +191,6 @@ public class NoteItemEditFragment extends Fragment {
             Bundle arguments = getArguments();
             if (arguments != null) {
                 mIsNoteEditing = true;
-                Log.d(LOG_TAG, "EditFrag:onActivityCreated " + arguments.getParcelable(Note.NOTE_TAG));
                 mNote = arguments.getParcelable(Note.NOTE_TAG);
                 try {
                     mInitialNote = mNote.clone();
@@ -197,7 +199,6 @@ public class NoteItemEditFragment extends Fragment {
                 }
 
             } else {
-                Log.d(LOG_TAG, "EditFrag:onActivityCreated arguments = null");
                 mIsNoteEditing = false;
             }
         } else {
@@ -217,7 +218,6 @@ public class NoteItemEditFragment extends Fragment {
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        //Log.d(LOG_TAG,"onSaveInstanceState: "+mNote.toString()+" /---/ "+mInitialNote.toString());
         outState.putBoolean(INITIAL_NOTE_TAG, mIsNoteEditing);
         outState.putParcelable(Note.NOTE_TAG, mNote);
         outState.putParcelable(INITIAL_NOTE_TAG, mInitialNote);
@@ -235,57 +235,72 @@ public class NoteItemEditFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.btSaveMenuItem:
-                ContentValues cv = new ContentValues();
-                cv.clear();
-
-                cv.put(NoteDBContract.NoteTable.COLUMN_TITLE, mNote.mTitle);
-                cv.put(NoteDBContract.NoteTable.COLUMN_CONTENT, mNote.mContent);
-                cv.put(NoteDBContract.NoteTable.COLUMN_RANK, mNote.mRank);
-                cv.put(NoteDBContract.NoteTable.COLUMN_IMAGE_PATH,mNote.mImagePath);
-                cv.put(NoteDBContract.NoteTable.COLUMN_CREATED,System.currentTimeMillis());
-                if (mIsNoteEditing){
-                    Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI,mNote.mId);
-                    getActivity().getContentResolver().update(uri, cv, null, null);
-                } else {
-                    getActivity().getContentResolver().insert(NoteDBContract.NoteTable.TABLE_URI, cv);
-                }
-
-                getActivity().onBackPressed();
+                saveNote();
                 return true;
             case R.id.btDeleteMenuItem:
-                if (mIsNoteEditing) {
-                    Uri uri = ContentUris.withAppendedId(NoteDBContract.NoteTable.TABLE_URI, mNote.mId);
-                    getActivity().getContentResolver().delete(uri, null, null);
-
-                    //I think it is a crutch or hardcode, but it work properly(go back to listFragment)
-                    while (getActivity().getSupportFragmentManager().getBackStackEntryCount() > 0) {
-                        getActivity().getSupportFragmentManager().popBackStackImmediate();
-                    }
-                } else{
-                    getActivity().onBackPressed();
-                }
-
+                deleteNote();
                 return true;
-
             case R.id.btUndoMenuItem:
-                //Log.d(LOG_TAG,"Undo: "+mNote.toString()+" /---/ "+mInitialNote.toString());
-                //Log.d(LOG_TAG,"Undo: "+mNote.equals(mInitialNote));
-                if (!mNote.equals(mInitialNote)){
-                    mEtTitle.setText(mInitialNote.mTitle);
-                    mEtContent.setText(mInitialNote.mContent);
-                    mSpinner.setSelection(mInitialNote.mRank);
-                    mDownloader.setImage(mInitialNote.mImagePath, mIbImage, ImageDownloader.imageSize.FULL);
-
-                    try {
-                        mNote = mInitialNote.clone();
-                    } catch (CloneNotSupportedException e) {
-                        e.printStackTrace();
-                    }
-                }
+                undoChanges();
                 return true;
 
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void saveNote(){
+        removeEditTextFocus(mEtTitle);
+        if (!TextUtils.isEmpty(mNote.mTitle) && !TextUtils.isEmpty(mNote.mContent)) {
+            ContentValues cv = new ContentValues();
+            cv.clear();
+
+            cv.put(NoteTableContract.COLUMN_TITLE, mNote.mTitle);
+            cv.put(NoteTableContract.COLUMN_CONTENT, mNote.mContent);
+            cv.put(NoteTableContract.COLUMN_RANK, mNote.mRank);
+            cv.put(NoteTableContract.COLUMN_IMAGE_PATH, mNote.mImagePath);
+            cv.put(NoteTableContract.COLUMN_CREATED, System.currentTimeMillis());
+            if (mIsNoteEditing) {
+                Uri uri = ContentUris.withAppendedId(NoteDBContract.NOTE_TABLE_URI, mNote.mId);
+                getActivity().getContentResolver().update(uri, cv, null, null);
+            } else {
+                getActivity().getContentResolver().insert(NoteDBContract.NOTE_TABLE_URI, cv);
+            }
+            getActivity().onBackPressed();
+        } else {
+            Toast.makeText(getActivity(),
+                    "Text fields can`t be empty!",Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void deleteNote(){
+        removeEditTextFocus(mEtTitle);
+        if (mIsNoteEditing) {
+            Uri uri = ContentUris.withAppendedId(NoteDBContract.NOTE_TABLE_URI, mNote.mId);
+            getActivity().getContentResolver().delete(uri, null, null);
+
+            //I think it is a crutch or hardcode, but it work properly(go back to listFragment)
+            while (getActivity().getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                getActivity().getSupportFragmentManager().popBackStackImmediate();
+            }
+        } else{
+            getActivity().onBackPressed();
+        }
+    }
+
+    private void undoChanges(){
+        removeEditTextFocus(mEtTitle);
+        if (!mNote.equals(mInitialNote)){
+            mEtTitle.setText(mInitialNote.mTitle);
+            mEtContent.setText(mInitialNote.mContent);
+            mSpinner.setSelection(mInitialNote.mRank);
+            mDownloader.setImage(mInitialNote.mImagePath, mIbImage, ImageDownloader.imageSize.FULL);
+
+            try {
+                mNote = mInitialNote.clone();
+            } catch (CloneNotSupportedException e) {
+                e.printStackTrace();
+            }
         }
     }
 

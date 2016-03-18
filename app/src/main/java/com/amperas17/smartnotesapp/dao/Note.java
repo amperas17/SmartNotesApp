@@ -1,8 +1,12 @@
-package com.amperas17.smartnotesapp;
+package com.amperas17.smartnotesapp.dao;
 
 import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+
+import com.amperas17.smartnotesapp.db.NoteDBContract;
+import com.amperas17.smartnotesapp.db.NoteTableContract;
 
 import java.text.SimpleDateFormat;
 
@@ -13,26 +17,26 @@ public class Note implements Parcelable,Cloneable {
     public  static final String NOTE_TAG = "note";
     private SimpleDateFormat mDateFormat = new SimpleDateFormat("dd.MM.yy HH:mm:ss");
 
-    public Integer mId;
+    public int mId;
     public String mTitle;
     public String mContent;
-    public Integer mRank;
-    public Long mCreated;
+    public int mRank;
+    public double mCreated;
     public String mImagePath;
-    public Double mLatitude;
-    public Double mLongitude;
+    public double mLatitude;
+    public double mLongitude;
 
     public Note(){
         mId = 0;
         mTitle = "";
         mContent = "";
         mRank = 0;
-        mCreated = 0l;
+        mCreated = 0;
         mImagePath = "";
-        mLatitude = 0.0;
-        mLongitude = 0.0;
+        mLatitude = 0;
+        mLongitude = 0;
     }
-    public Note(int id,String title,String content,int rank,long created,
+    public Note(int id,String title,String content,int rank,double created,
                 String imagePath,double latitude,double longitude){
         mId = id;
         mTitle = title;
@@ -49,7 +53,7 @@ public class Note implements Parcelable,Cloneable {
         mTitle = in.readString();
         mContent = in.readString();
         mRank = in.readInt();
-        mCreated = in.readLong();
+        mCreated = in.readDouble();
         mImagePath = in.readString();
         mLatitude = in.readDouble();
         mLongitude = in.readDouble();
@@ -57,21 +61,21 @@ public class Note implements Parcelable,Cloneable {
 
     public Note(Cursor cursor){
         mId = cursor.getInt(cursor
-                .getColumnIndex(NoteDBContract.NoteTable._ID));
+                .getColumnIndex(NoteTableContract._ID));
         mTitle = cursor.getString(cursor
-                .getColumnIndex(NoteDBContract.NoteTable.COLUMN_TITLE));
+                .getColumnIndex(NoteTableContract.COLUMN_TITLE));
         mContent = cursor.getString(cursor
-                .getColumnIndex(NoteDBContract.NoteTable.COLUMN_CONTENT));
+                .getColumnIndex(NoteTableContract.COLUMN_CONTENT));
         mRank = cursor.getInt(cursor
-                .getColumnIndex(NoteDBContract.NoteTable.COLUMN_RANK));
-        mCreated = cursor.getLong(cursor
-                .getColumnIndex(NoteDBContract.NoteTable.COLUMN_CREATED));
+                .getColumnIndex(NoteTableContract.COLUMN_RANK));
+        mCreated = cursor.getDouble(cursor
+                .getColumnIndex(NoteTableContract.COLUMN_CREATED));
         mImagePath = cursor.getString(cursor
-                .getColumnIndex(NoteDBContract.NoteTable.COLUMN_IMAGE_PATH));
+                .getColumnIndex(NoteTableContract.COLUMN_IMAGE_PATH));
         mLatitude = cursor.getDouble(cursor
-                .getColumnIndex(NoteDBContract.NoteTable.COLUMN_LATITUDE));
+                .getColumnIndex(NoteTableContract.COLUMN_LATITUDE));
         mLongitude = cursor.getDouble(cursor
-                .getColumnIndex(NoteDBContract.NoteTable.COLUMN_LONGITUDE));
+                .getColumnIndex(NoteTableContract.COLUMN_LONGITUDE));
     }
 
     @Override
@@ -133,7 +137,7 @@ public class Note implements Parcelable,Cloneable {
         String result;
         result = "Title: " + mTitle + "\n" +
                 "Content: " + mContent + "\n" +
-                "Priority: " + NoteDBContract.NoteTable.PRIORITIES[mRank] + "\n" +
+                "Priority: " + NoteTableContract.PRIORITIES[mRank] + "\n" +
                 "Created: " + mDateFormat.format(mCreated) + "\n" +
                 "Latitude: " + mLatitude + "\n" +
                 "Longitude: " + mLongitude + "\n";

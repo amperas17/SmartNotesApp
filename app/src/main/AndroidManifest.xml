@@ -2,8 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.amperas17.smartnotesapp" >
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -11,7 +10,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".MainActivity"
+            android:name=".activity.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,15 +21,19 @@
         <activity
             android:name="ru.bartwell.exfilepicker.ExFilePickerActivity"
             android:configChanges="orientation|screenSize"
-            android:theme="@style/ExFilePickerThemeDark"
-            />
+            android:theme="@style/ExFilePickerThemeDark" />
 
-    <provider
-            android:name=".NoteProvider"
+        <provider
+            android:name=".db.NoteProvider"
             android:authorities="com.amperas17.providers.smartNotes"
             android:enabled="true"
             android:exported="true" >
         </provider>
+
+        <service
+            android:name=".service.SaveFileService"
+            android:exported="false" >
+        </service>
     </application>
 
 </manifest>
