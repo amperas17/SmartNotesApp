@@ -6,11 +6,13 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -31,6 +33,7 @@ import com.amperas17.smartnotesapp.db.NoteTableContract;
 import com.amperas17.smartnotesapp.service.SaveFileService;
 import com.amperas17.smartnotesapp.util.FileSaver;
 import com.amperas17.smartnotesapp.receiver.SaveFileResultReceiver;
+import com.amperas17.smartnotesapp.util.NoteDeleter;
 
 import ru.bartwell.exfilepicker.ExFilePicker;
 import ru.bartwell.exfilepicker.ExFilePickerParcelObject;
@@ -57,11 +60,16 @@ public class NoteListFragment extends ListFragment
 
     private static final int SINGLE_DIRECTORY_PICKER_RESULT = 0;
 
+    public static final int LIST_FRAGMENT_REQUEST_CODE = 10;
+
 
     NoteAdapter mNoteAdapter;
     ListView mListView;
     Note mSavingNote;
     SaveFileResultReceiver mReceiver;
+
+    NoteDeleter mDeleter;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -70,6 +78,8 @@ public class NoteListFragment extends ListFragment
         setHasOptionsMenu(true);
 
         mSavingNote = new Note();
+
+        mDeleter = new NoteDeleter(this);
 
         return view;
     }
@@ -93,7 +103,6 @@ public class NoteListFragment extends ListFragment
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         if (v.getId()==android.R.id.list){
-            //AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)menuInfo;
             menu.setHeaderTitle("Choose action:");
             String[] menuItems = CONTEXT_MENU_ACTIONS;
             for (int i = 0; i<menuItems.length; i++) {
@@ -111,7 +120,7 @@ public class NoteListFragment extends ListFragment
 
         switch (menuItemIndex){
             case CONTEXT_ACTION_DELETE:
-                deleteNote(note.mId);
+                mDeleter.openDeleteDialog(note,LIST_FRAGMENT_REQUEST_CODE);
                 break;
             case CONTEXT_ACTION_EDIT:
                 editNote(note);
@@ -125,14 +134,9 @@ public class NoteListFragment extends ListFragment
         return true;
     }
 
-    private void deleteNote(int noteId){
-        Uri uri = ContentUris.withAppendedId(NoteDBContract.NOTE_TABLE_URI, noteId);
-        getActivity().getContentResolver().delete(uri,null,null);
-    }
-
     private void editNote(Note note){
         Bundle bundle = new Bundle();
-        bundle.putParcelable(Note.NOTE_TAG,note);
+        bundle.putParcelable(Note.NOTE_TAG, note);
         openNoteFragment(noteFragType.EDIT, bundle);
     }
 
@@ -155,27 +159,47 @@ public class NoteListFragment extends ListFragment
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        if (requestCode == SINGLE_DIRECTORY_PICKER_RESULT) {
-            if (data != null) {
-                ExFilePickerParcelObject object = data
-                        .getParcelableExtra(ExFilePickerParcelObject.class.getCanonicalName());
-                try {
-                    String directoryPath = object.path + object.names.get(0);
-                    String filePath = directoryPath +'/' + mSavingNote.mTitle;
-                    Toast.makeText(getActivity(), "Note file was saved.", Toast.LENGTH_LONG);
-
-                    saveTextFile(filePath);
-
-                } catch (IndexOutOfBoundsException e){
-                    e.printStackTrace();
-                } catch (Exception e){
-                    e.printStackTrace();
+        switch (requestCode){
+            case SINGLE_DIRECTORY_PICKER_RESULT:
+                saveTextFile(data);
+                break;
+            case (LIST_FRAGMENT_REQUEST_CODE):
+                if (resultCode == DeleteNoteDialogFragment.RESULT_CODE_YES) {
+                    deleteNote(data);
                 }
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void deleteNote(Intent data){
+        int id = data.getIntExtra(NoteTableContract._ID, -1);
+        if (id != -1) {
+            mDeleter.deleteNote(id);
+        }
+    }
+
+    private void saveTextFile(Intent data){
+        if (data != null) {
+            ExFilePickerParcelObject object = data
+                    .getParcelableExtra(ExFilePickerParcelObject.class.getCanonicalName());
+            try {
+                String directoryPath = object.path + object.names.get(0);
+                String filePath = directoryPath +'/' + mSavingNote.mTitle;
+
+                callSavingService(filePath);
+
+            } catch (IndexOutOfBoundsException e){
+                e.printStackTrace();
+            } catch (Exception e){
+                e.printStackTrace();
             }
         }
     }
 
-    private void saveTextFile(String filePath){
+
+    private void callSavingService(String filePath){
         mReceiver = new SaveFileResultReceiver(new Handler());
         mReceiver.setReceiver(this);
 

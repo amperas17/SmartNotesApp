@@ -31,6 +31,7 @@ import com.amperas17.smartnotesapp.db.NoteDBContract;
 import com.amperas17.smartnotesapp.R;
 import com.amperas17.smartnotesapp.db.NoteTableContract;
 import com.amperas17.smartnotesapp.util.ImageDownloader;
+import com.amperas17.smartnotesapp.util.NoteDeleter;
 
 import ru.bartwell.exfilepicker.ExFilePicker;
 import ru.bartwell.exfilepicker.ExFilePickerParcelObject;
@@ -43,6 +44,9 @@ public class NoteItemEditFragment extends Fragment {
     public  static final String IS_EDITING_TAG = "isEditing";
     private static final int SINGLE_IMAGE_PICKER_RESULT = 0;
 
+    public static final int EDIT_FRAGMENT_REQUEST_CODE = 12;
+
+
     RelativeLayout mRelativeLayout;
     EditText mEtTitle,mEtContent;
     Spinner mSpinner;
@@ -54,6 +58,8 @@ public class NoteItemEditFragment extends Fragment {
     ArrayAdapter<String> spinnerAdapter;
 
     ImageDownloader mDownloader;
+    NoteDeleter mDeleter;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -65,6 +71,7 @@ public class NoteItemEditFragment extends Fragment {
         mInitialNote = new Note();
 
         mDownloader = new ImageDownloader(getActivity());
+        mDeleter = new NoteDeleter(this);
 
         mEtTitle = (EditText)view.findViewById(R.id.et_note_edit_title);
         mEtTitle.addTextChangedListener(new TextWatcher() {
@@ -163,23 +170,20 @@ public class NoteItemEditFragment extends Fragment {
         startActivityForResult(intent, SINGLE_IMAGE_PICKER_RESULT);
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == SINGLE_IMAGE_PICKER_RESULT) {
-            if (data != null) {
-                ExFilePickerParcelObject object = data
-                        .getParcelableExtra(ExFilePickerParcelObject.class.getCanonicalName());
-                try {
-                    String filePath = object.path + object.names.get(0);
-                    mNote.mImagePath = filePath;
+    private void setImageToImageView(Intent data){
+        if (data != null) {
+            ExFilePickerParcelObject object = data
+                    .getParcelableExtra(ExFilePickerParcelObject.class.getCanonicalName());
+            try {
+                String filePath = object.path + object.names.get(0);
+                mNote.mImagePath = filePath;
 
-                    mDownloader.setImage(mNote.mImagePath, mIbImage, ImageDownloader.imageSize.FULL);
+                mDownloader.setImage(mNote.mImagePath, mIbImage, ImageDownloader.imageSize.FULL);
 
-                } catch (IndexOutOfBoundsException e){
-                    e.printStackTrace();
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
+            } catch (IndexOutOfBoundsException e){
+                e.printStackTrace();
+            } catch (Exception e){
+                e.printStackTrace();
             }
         }
     }
@@ -238,7 +242,7 @@ public class NoteItemEditFragment extends Fragment {
                 saveNote();
                 return true;
             case R.id.btDeleteMenuItem:
-                deleteNote();
+                mDeleter.openDeleteDialog(mNote,EDIT_FRAGMENT_REQUEST_CODE);
                 return true;
             case R.id.btUndoMenuItem:
                 undoChanges();
@@ -273,21 +277,6 @@ public class NoteItemEditFragment extends Fragment {
         }
     }
 
-    private void deleteNote(){
-        removeEditTextFocus(mEtTitle);
-        if (mIsNoteEditing) {
-            Uri uri = ContentUris.withAppendedId(NoteDBContract.NOTE_TABLE_URI, mNote.mId);
-            getActivity().getContentResolver().delete(uri, null, null);
-
-            //I think it is a crutch or hardcode, but it work properly(go back to listFragment)
-            while (getActivity().getSupportFragmentManager().getBackStackEntryCount() > 0) {
-                getActivity().getSupportFragmentManager().popBackStackImmediate();
-            }
-        } else{
-            getActivity().onBackPressed();
-        }
-    }
-
     private void undoChanges(){
         removeEditTextFocus(mEtTitle);
         if (!mNote.equals(mInitialNote)){
@@ -301,6 +290,38 @@ public class NoteItemEditFragment extends Fragment {
             } catch (CloneNotSupportedException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode){
+            case SINGLE_IMAGE_PICKER_RESULT:
+                setImageToImageView(data);
+                break;
+            case EDIT_FRAGMENT_REQUEST_CODE:
+                deleteNote(data);
+                break;
+            default:
+                break;
+        }
+
+    }
+
+    private void deleteNote(Intent data){
+        removeEditTextFocus(mEtTitle);
+        if (mIsNoteEditing) {
+            int id = data.getIntExtra(NoteTableContract._ID, -1);
+            if (id != -1) {
+                mDeleter.deleteNote(id);
+
+                //I think it is a crutch or hardcode, but it work properly(go back to listFragment)
+                while (getActivity().getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                    getActivity().getSupportFragmentManager().popBackStackImmediate();
+                }
+            }
+        } else{
+            getActivity().onBackPressed();
         }
     }
 
