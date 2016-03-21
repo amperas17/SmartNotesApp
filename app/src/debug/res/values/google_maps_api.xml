@@ -1,0 +1,18 @@
+<resources>
+    <!--
+    TODO: Before you run your application, you need a Google Maps API key.
+
+    To get one, follow this link, follow the directions and press "Create" at the end:
+
+https://console.developers.google.com/flows/enableapi?apiid=maps_android_backend&keyType=CLIENT_SIDE_ANDROID&r=8F:5F:31:4D:DE:CD:F8:97:0E:12:69:DB:38:BD:C4:74:46:15:56:99%3Bcom.amperas17.smartnotesapp.activity
+
+    You can also add your credentials to an existing key, using this line:
+    8F:5F:31:4D:DE:CD:F8:97:0E:12:69:DB:38:BD:C4:74:46:15:56:99;com.amperas17.smartnotesapp.activity
+
+    Once you have your key (it starts with "AIza"), replace the "google_maps_key"
+    string in this file.
+    -->
+    <string name="google_maps_key" translatable="false" templateMergeStrategy="preserve">
+        AIzaSyAUJrrYUEh7GydwJE7Fm2-HEA9tfb2e7Dk
+    </string>
+</resources>
