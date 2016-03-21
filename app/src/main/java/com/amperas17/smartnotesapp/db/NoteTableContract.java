@@ -48,6 +48,9 @@ public final class NoteTableContract implements BaseColumns {
     public static final int MEDIUM_PRIORITY = 2;
     public static final int HIGH_PRIORITY = 3;
 
+    public static final int WRONG_UNSET_COORDINATE = 100;
+
+
 
     public static Uri buildCategoryUri(long id){
         return ContentUris.withAppendedId(NoteDBContract.NOTE_TABLE_URI, id);

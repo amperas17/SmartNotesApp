@@ -49,6 +49,7 @@
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
         android:layout_centerVertical="true"
+        android:background="@color/transparent"
         android:scaleType="fitXY"
         />
 

@@ -25,4 +25,5 @@ dependencies {
     compile 'com.squareup.picasso:picasso:2.5.2'
     compile 'com.google.code.gson:gson:2.6.2'
     compile 'ru.bartwell:exfilepicker:1.8'
+    compile 'com.google.android.gms:play-services:7.8.0'
 }

@@ -1,18 +1,14 @@
 package com.amperas17.smartnotesapp.fragment;
 
-import android.content.ContentUris;
 import android.content.Intent;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -25,6 +21,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.amperas17.smartnotesapp.activity.MapsActivity;
 import com.amperas17.smartnotesapp.dao.Note;
 import com.amperas17.smartnotesapp.db.NoteDBContract;
 import com.amperas17.smartnotesapp.R;
@@ -52,15 +49,23 @@ public class NoteListFragment extends ListFragment
     final String EDIT_NOTE_TRANSACTION_TAG = "editNote";
     final String SHOW_NOTE_TRANSACTION_TAG = "showNote";
 
-    public static final String [] CONTEXT_MENU_ACTIONS = {"Delete","Edit","Save file"};
+    public static final String [] CONTEXT_MENU_ACTIONS = {"Delete","Edit","Save file","Show on map"};
 
     public static final int CONTEXT_ACTION_DELETE = 0;
     public static final int CONTEXT_ACTION_EDIT = 1;
     public static final int CONTEXT_ACTION_SAVE_FILE = 2;
+    public static final int CONTEXT_ACTION_OPEN_NOTE_ON_MAP = 3;
 
-    private static final int SINGLE_DIRECTORY_PICKER_RESULT = 0;
+
+    private static final int SINGLE_DIRECTORY_PICKER_REQUEST_CODE = 0;
 
     public static final int LIST_FRAGMENT_REQUEST_CODE = 10;
+
+    public static final int MAPS_ACTIVITY_REQUEST_CODE = 20;
+
+    public static final String MAPS_REQUEST_ACTION_TAG = "mapsAction";
+    public static final int MAPS_ACTION_SHOW_NOTES = 101;
+    public static final int MAPS_ACTION_SHOW_SINGLE_NOTE = 102;
 
 
     NoteAdapter mNoteAdapter;
@@ -78,15 +83,14 @@ public class NoteListFragment extends ListFragment
         setHasOptionsMenu(true);
 
         mSavingNote = new Note();
-
         mDeleter = new NoteDeleter(this);
-
         return view;
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.add_button, menu);
+        inflater.inflate(R.menu.map_button, menu);
     }
 
     @Override
@@ -95,9 +99,18 @@ public class NoteListFragment extends ListFragment
             case R.id.btAddMenuItem:
                 openNoteFragment(noteFragType.EDIT,null);
                 return true;
+            case R.id.btMapItem:
+                showNotesOnMap();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void showNotesOnMap(){
+        Intent intent = new Intent(getActivity(), MapsActivity.class);
+        intent.putExtra(MAPS_REQUEST_ACTION_TAG,MAPS_ACTION_SHOW_NOTES);
+        startActivityForResult(intent, MAPS_ACTIVITY_REQUEST_CODE);
     }
 
     @Override
@@ -128,10 +141,24 @@ public class NoteListFragment extends ListFragment
             case CONTEXT_ACTION_SAVE_FILE:
                 saveNoteFile(note);
                 break;
+            case CONTEXT_ACTION_OPEN_NOTE_ON_MAP:
+                showSingleNoteOnMap(note);
+                break;
             default:
                 break;
         }
         return true;
+    }
+
+    private void showSingleNoteOnMap(Note note){
+        if (note.mLatitude!=NoteTableContract.WRONG_UNSET_COORDINATE) {
+            Intent intent = new Intent(getActivity(), MapsActivity.class);
+            intent.putExtra(MAPS_REQUEST_ACTION_TAG,MAPS_ACTION_SHOW_SINGLE_NOTE);
+            intent.putExtra(Note.NOTE_TAG, note);
+            startActivity(intent);
+        } else {
+            Toast.makeText(getActivity(),"Sorry, but coordinates was not set!",Toast.LENGTH_LONG).show();
+        }
     }
 
     private void editNote(Note note){
@@ -154,18 +181,23 @@ public class NoteListFragment extends ListFragment
                ru.bartwell.exfilepicker.ExFilePickerActivity.class);
        intent.putExtra(ExFilePicker.SET_ONLY_ONE_ITEM, true);
        intent.putExtra(ExFilePicker.SET_CHOICE_TYPE, ExFilePicker.CHOICE_TYPE_DIRECTORIES);
-       startActivityForResult(intent, SINGLE_DIRECTORY_PICKER_RESULT);
+       startActivityForResult(intent, SINGLE_DIRECTORY_PICKER_REQUEST_CODE);
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         switch (requestCode){
-            case SINGLE_DIRECTORY_PICKER_RESULT:
+            case SINGLE_DIRECTORY_PICKER_REQUEST_CODE:
                 saveTextFile(data);
                 break;
             case (LIST_FRAGMENT_REQUEST_CODE):
                 if (resultCode == DeleteNoteDialogFragment.RESULT_CODE_YES) {
                     deleteNote(data);
+                }
+                break;
+            case MAPS_ACTIVITY_REQUEST_CODE:
+                if (resultCode == getActivity().RESULT_OK) {
+                    showNoteFromMap(data);
                 }
                 break;
             default:
@@ -198,6 +230,12 @@ public class NoteListFragment extends ListFragment
         }
     }
 
+    private void showNoteFromMap(Intent data){
+        Note note = data.getParcelableExtra(Note.NOTE_TAG);
+        Bundle bundle = new Bundle();
+        bundle.putInt(NoteTableContract._ID,note.mId);
+        openNoteFragment(noteFragType.SHOW,bundle);
+    }
 
     private void callSavingService(String filePath){
         mReceiver = new SaveFileResultReceiver(new Handler());
@@ -223,10 +261,21 @@ public class NoteListFragment extends ListFragment
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
         mListView = getListView();
         registerForContextMenu(mListView);
         super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        getActivity().getSupportLoaderManager().destroyLoader(LOADER_ID);
     }
 
     @Override
@@ -267,6 +316,8 @@ public class NoteListFragment extends ListFragment
                     .commit();
         }
     }
+
+
 
 
     @Override

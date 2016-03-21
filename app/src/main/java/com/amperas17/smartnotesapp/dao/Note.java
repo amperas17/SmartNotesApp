@@ -3,9 +3,7 @@ package com.amperas17.smartnotesapp.dao;
 import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
-import com.amperas17.smartnotesapp.db.NoteDBContract;
 import com.amperas17.smartnotesapp.db.NoteTableContract;
 
 import java.text.SimpleDateFormat;
@@ -14,7 +12,9 @@ import java.text.SimpleDateFormat;
  * Provides work with Note objects.
  */
 public class Note implements Parcelable,Cloneable {
-    public  static final String NOTE_TAG = "note";
+    public static final String NOTE_TAG = "note";
+    public static final String LATITUDE_TAG = "mapsLatitude";
+    public static final String LONGITUDE_TAG = "mapsLongitude";
     private SimpleDateFormat mDateFormat = new SimpleDateFormat("dd.MM.yy HH:mm:ss");
 
     public int mId;
@@ -33,8 +33,8 @@ public class Note implements Parcelable,Cloneable {
         mRank = 0;
         mCreated = 0;
         mImagePath = "";
-        mLatitude = 0;
-        mLongitude = 0;
+        mLatitude = NoteTableContract.WRONG_UNSET_COORDINATE;
+        mLongitude = NoteTableContract.WRONG_UNSET_COORDINATE;
     }
     public Note(int id,String title,String content,int rank,double created,
                 String imagePath,double latitude,double longitude){
@@ -119,7 +119,11 @@ public class Note implements Parcelable,Cloneable {
         Note note = (Note) o;
         if (note.mTitle.equals(this.mTitle) &&
                 note.mContent.equals(this.mContent) &&
-                note.mRank == this.mRank){
+                note.mRank == this.mRank &&
+                note.mImagePath.equals(this.mImagePath) &&
+                note.mLatitude == this.mLatitude &&
+                note.mLongitude == this.mLongitude
+                ){
             return true;
         }
         else {

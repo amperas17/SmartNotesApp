@@ -52,31 +52,26 @@ public class NoteAdapter extends CursorAdapter{
             holder.tvId.setTag(note);
 
             ImageDownloader downloader = new ImageDownloader(context);
-            downloader.setImage(note.mImagePath,holder.ivImage, ImageDownloader.imageSize.SMALL_ICON);
+            downloader.setImage(note.mImagePath, holder.ivImage, ImageDownloader.imageSize.SMALL_ICON);
 
             holder.tvTitle.setText(note.mTitle);
 
-            setIcon(note.mRank,holder.ivPriority);
-
+            holder.ivPriority.setImageResource(setIcon(note.mRank));
         }
     }
 
-    private void setIcon(int rank,ImageView imageView){
+    private int setIcon(int rank){
         switch (rank){
             case NoteTableContract.NO_PRIORITY:
-                imageView.setImageResource(R.drawable.ic_white_pin);
-                break;
+                return R.drawable.ic_white_pin;
             case NoteTableContract.LOW_PRIORITY:
-                imageView.setImageResource(R.drawable.ic_green_pin);
-                break;
+                return R.drawable.ic_green_pin;
             case NoteTableContract.MEDIUM_PRIORITY:
-                imageView.setImageResource(R.drawable.ic_yellow_pin);
-                break;
+                return R.drawable.ic_yellow_pin;
             case NoteTableContract.HIGH_PRIORITY:
-                imageView.setImageResource(R.drawable.ic_red_pin);
-                break;
+                return R.drawable.ic_red_pin;
             default:
-                imageView.setImageResource(R.drawable.ic_white_pin);
+                return R.drawable.ic_white_pin;
         }
     }
 
@@ -85,6 +80,5 @@ public class NoteAdapter extends CursorAdapter{
         public ImageView ivImage;
         public TextView tvTitle;
         public ImageView ivPriority;
-
     }
 }
